@@ -3,9 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>カスタム棒人間バトル：ビルド＆ファイト【Web格ゲー】</title>
-    <meta name="description" content="合計10ポイントのステータス割り振りで最強の棒人間を作れ。Webブラウザで遊べるカスタム格闘ゲーム。">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>カスタム棒人間バトル：Mobile Edition</title>
+    <meta name="description" content="スマホ対応。ステータスを割り振って戦う棒人間格闘ゲーム。">
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Roboto+Mono:wght@400;700&display=swap"
         rel="stylesheet">
     <style>
@@ -28,6 +28,11 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            touch-action: none;
+            /* スマホでのスクロール防止 */
+            -webkit-user-select: none;
+            /* テキスト選択防止 */
+            user-select: none;
         }
 
         /* UI Container */
@@ -42,13 +47,14 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            z-index: 10;
         }
 
         /* Screens */
         .screen {
             pointer-events: auto;
             background: var(--ui-bg);
-            padding: 40px;
+            padding: 30px;
             border-radius: 12px;
             border: 2px solid #333;
             text-align: center;
@@ -60,7 +66,7 @@
 
         h1 {
             font-family: 'Black Ops One', cursive;
-            font-size: 2.5rem;
+            font-size: 2rem;
             margin: 0 0 10px 0;
             color: var(--accent);
             text-transform: uppercase;
@@ -77,7 +83,7 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 20px;
-            font-size: 1.2rem;
+            font-size: 1rem;
             border-bottom: 1px solid #444;
             padding-bottom: 10px;
         }
@@ -86,19 +92,19 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 15px 0;
-            font-size: 1.1rem;
+            margin: 10px 0;
+            font-size: 1rem;
         }
 
         .stat-value {
             color: var(--neon-blue);
             font-weight: bold;
-            width: 40px;
+            width: 30px;
             text-align: right;
         }
 
         input[type="range"] {
-            width: 55%;
+            width: 50%;
             cursor: pointer;
             accent-color: var(--accent);
         }
@@ -106,25 +112,26 @@
         .weapon-select {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin: 25px 0;
+            gap: 10px;
+            margin: 20px 0;
         }
 
         .weapon-btn {
             background: #333;
             border: 2px solid #555;
             color: #fff;
-            padding: 10px 15px;
+            padding: 8px 12px;
             cursor: pointer;
             font-family: inherit;
             transition: 0.2s;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
         }
 
         .weapon-btn.selected {
             border-color: var(--neon-yellow);
             background: #444;
-            box-shadow: 0 0 15px rgba(255, 165, 2, 0.4);
+            box-shadow: 0 0 10px rgba(255, 165, 2, 0.4);
             transform: scale(1.05);
         }
 
@@ -132,11 +139,11 @@
             background: var(--accent);
             color: white;
             border: none;
-            padding: 15px 40px;
-            font-size: 1.5rem;
+            padding: 12px 30px;
+            font-size: 1.2rem;
             font-family: 'Black Ops One', cursive;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 15px;
             transform: skew(-10deg);
             transition: 0.2s;
             box-shadow: 0 4px 0 #b33939;
@@ -144,7 +151,6 @@
 
         .action-btn:hover {
             transform: skew(-10deg) translateY(-2px);
-            box-shadow: 0 6px 0 #b33939;
         }
 
         .action-btn:active {
@@ -152,7 +158,7 @@
             box-shadow: 0 2px 0 #b33939;
         }
 
-        /* HUD (In Game) */
+        /* HUD */
         #hud {
             position: absolute;
             top: 20px;
@@ -162,11 +168,12 @@
             justify-content: space-between;
             align-items: center;
             pointer-events: none;
+            z-index: 5;
         }
 
         .health-bar-container {
             width: 40%;
-            height: 30px;
+            height: 20px;
             background: #333;
             border: 2px solid #fff;
             position: relative;
@@ -187,19 +194,80 @@
 
         #timer {
             font-family: 'Black Ops One', cursive;
-            font-size: 3rem;
+            font-size: 2rem;
             color: white;
             text-shadow: 0 0 10px black;
         }
 
-        .controls-hint {
-            margin-top: 20px;
-            font-size: 0.75rem;
-            color: #888;
-            text-align: left;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px;
-            border-radius: 6px;
+        /* --- Mobile Controls (New!) --- */
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            height: 150px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-sizing: border-box;
+            pointer-events: none;
+            /* UIレイヤーの下だが、ボタン自体はpointer-events:autoにする */
+            z-index: 20;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            pointer-events: auto;
+        }
+
+        .touch-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(4px);
+            border-radius: 50%;
+            color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Black Ops One';
+            font-size: 1.5rem;
+            user-select: none;
+            touch-action: manipulation;
+            transition: background 0.1s, transform 0.1s;
+        }
+
+        .touch-btn:active,
+        .touch-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0.95);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Directional Pad */
+        .btn-move {
+            width: 60px;
+            height: 60px;
+        }
+
+        /* Action Buttons */
+        .btn-jump {
+            width: 70px;
+            height: 70px;
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+            font-size: 1rem;
+            margin-bottom: 20px;
+            /* Offset for thumb arc */
+        }
+
+        .btn-atk {
+            width: 90px;
+            height: 90px;
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(255, 71, 87, 0.15);
+            font-size: 1.2rem;
         }
     </style>
 </head>
@@ -207,6 +275,17 @@
 <body>
 
     <canvas id="gameCanvas"></canvas>
+
+    <div id="mobile-controls" class="hidden">
+        <div class="control-group">
+            <div id="btnLeft" class="touch-btn btn-move">←</div>
+            <div id="btnRight" class="touch-btn btn-move">→</div>
+        </div>
+        <div class="control-group">
+            <div id="btnJump" class="touch-btn btn-jump">JUMP</div>
+            <div id="btnAtk" class="touch-btn btn-atk">ATK</div>
+        </div>
+    </div>
 
     <div id="ui-layer">
 
@@ -222,7 +301,7 @@
 
         <div id="startScreen" class="screen">
             <h1>Stick Forge</h1>
-            <p style="letter-spacing: 2px; margin-bottom: 20px;">BUILD YOUR FIGHTER</p>
+            <p style="letter-spacing: 2px; margin-bottom: 15px; font-size:0.9rem;">BUILD YOUR FIGHTER</p>
 
             <div class="stat-header">
                 <span>TOTAL POINTS</span>
@@ -245,28 +324,20 @@
                 <span id="vitVal" class="stat-value">1</span>
             </div>
 
-            <p style="margin-top: 25px; font-size: 0.9rem; color: #aaa;">SELECT WEAPON</p>
+            <p style="margin-top: 20px; font-size: 0.8rem; color: #aaa;">SELECT WEAPON</p>
             <div class="weapon-select">
-                <button class="weapon-btn selected" onclick="selectWeapon('sword', this)">SWORD<br><span
-                        style="font-size:0.7em">バランス</span></button>
-                <button class="weapon-btn" onclick="selectWeapon('axe', this)">AXE<br><span
-                        style="font-size:0.7em">高威力・遅</span></button>
-                <button class="weapon-btn" onclick="selectWeapon('spear', this)">SPEAR<br><span
-                        style="font-size:0.7em">リーチ・速</span></button>
+                <button class="weapon-btn selected" onclick="selectWeapon('sword', this)">SWORD</button>
+                <button class="weapon-btn" onclick="selectWeapon('axe', this)">AXE</button>
+                <button class="weapon-btn" onclick="selectWeapon('spear', this)">SPEAR</button>
             </div>
 
             <button class="action-btn" onclick="startGame()">BATTLE START</button>
-
-            <div class="controls-hint">
-                <strong>操作方法:</strong><br>
-                [A][D] 移動 | [W] ジャンプ | [SPACE] 攻撃<br>
-                ※ポイントは合計10まで割り振れます。
-            </div>
+            <p style="margin-top:10px; font-size:0.7rem; color:#aaa;">PC: W/A/D/Space | Mobile: Touch Controls</p>
         </div>
 
         <div id="gameOverScreen" class="screen hidden">
             <h1 id="winnerText">YOU WIN</h1>
-            <button class="action-btn" onclick="location.reload()">RE-FORGE (再戦)</button>
+            <button class="action-btn" onclick="location.reload()">RE-FORGE</button>
         </div>
     </div>
 
@@ -275,21 +346,19 @@
         const canvas = document.getElementById('gameCanvas');
         const c = canvas.getContext('2d');
 
-        // Dynamic Resize
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            // Recalculate Ground Y on resize
+            if (window.gameRunning) GROUND_Y = canvas.height - 100;
         }
         window.addEventListener('resize', resize);
         resize();
 
         const GRAVITY = 0.7;
         let GROUND_Y = canvas.height - 100;
-
-        // Stats Limit
         const MAX_TOTAL_POINTS = 10;
 
-        // Input State
         const keys = {
             a: { pressed: false },
             d: { pressed: false },
@@ -302,7 +371,7 @@
         let timerId;
         let gameRunning = false;
 
-        // --- 2. Logic Functions (Stats & Build) ---
+        // --- 2. Logic Functions ---
 
         function updatePoints(changedId) {
             const strInput = document.getElementById('strRange');
@@ -312,43 +381,23 @@
             let str = parseInt(strInput.value);
             let agi = parseInt(agiInput.value);
             let vit = parseInt(vitInput.value);
-
             let currentTotal = str + agi + vit;
 
-            // ポイント上限チェック
             if (currentTotal > MAX_TOTAL_POINTS) {
                 const excess = currentTotal - MAX_TOTAL_POINTS;
-
-                // 操作したスライダーの値を戻す
-                if (changedId === 'strRange') {
-                    str -= excess;
-                    strInput.value = str;
-                } else if (changedId === 'agiRange') {
-                    agi -= excess;
-                    agiInput.value = agi;
-                } else if (changedId === 'vitRange') {
-                    vit -= excess;
-                    vitInput.value = vit;
-                }
+                if (changedId === 'strRange') { str -= excess; strInput.value = str; }
+                else if (changedId === 'agiRange') { agi -= excess; agiInput.value = agi; }
+                else if (changedId === 'vitRange') { vit -= excess; vitInput.value = vit; }
                 currentTotal = MAX_TOTAL_POINTS;
             }
 
-            // UI更新
             document.getElementById('strVal').innerText = str;
             document.getElementById('agiVal').innerText = agi;
             document.getElementById('vitVal').innerText = vit;
-
             const remaining = MAX_TOTAL_POINTS - currentTotal;
             document.getElementById('pointsDisplay').innerText = `${currentTotal} / ${MAX_TOTAL_POINTS}`;
-
-            if (remaining === 0) {
-                document.getElementById('pointsDisplay').style.color = 'var(--neon-blue)';
-            } else {
-                document.getElementById('pointsDisplay').style.color = 'var(--neon-yellow)';
-            }
+            document.getElementById('pointsDisplay').style.color = remaining === 0 ? 'var(--neon-blue)' : 'var(--neon-yellow)';
         }
-
-        // 初期化実行
         updatePoints();
 
         let selectedWeapon = 'sword';
@@ -377,13 +426,10 @@
                 this.isAttacking;
                 this.health = 100;
                 this.maxHealth = 100;
-
-                // Stats
                 this.damage = 10;
                 this.speed = 5;
                 this.jumpPower = -15;
                 this.weaponType = 'sword';
-
                 this.dead = false;
             }
 
@@ -392,36 +438,20 @@
                 c.lineWidth = 4;
                 c.fillStyle = this.color;
 
-                // Simple Stickman Draw
                 const x = this.position.x;
                 const y = this.position.y;
                 const w = this.width;
                 const h = this.height;
 
-                // Head
-                c.beginPath();
-                c.arc(x + w / 2, y, 20, 0, Math.PI * 2);
-                c.stroke();
-                // Body
-                c.beginPath();
-                c.moveTo(x + w / 2, y + 20);
-                c.lineTo(x + w / 2, y + 80);
-                c.stroke();
-                // Legs
-                c.beginPath();
-                c.moveTo(x + w / 2, y + 80);
-                c.lineTo(x, y + h);
-                c.moveTo(x + w / 2, y + 80);
-                c.lineTo(x + w, y + h);
-                c.stroke();
+                // Body Drawing
+                c.beginPath(); c.arc(x + w / 2, y, 20, 0, Math.PI * 2); c.stroke();
+                c.beginPath(); c.moveTo(x + w / 2, y + 20); c.lineTo(x + w / 2, y + 80); c.stroke();
+                c.beginPath(); c.moveTo(x + w / 2, y + 80); c.lineTo(x, y + h); c.moveTo(x + w / 2, y + 80); c.lineTo(x + w, y + h); c.stroke();
 
-                // Arms & Weapon Logic
                 const facingRight = this.attackBox.offset.x >= 0;
                 const armOriginX = x + w / 2;
                 const armOriginY = y + 40;
-
-                c.beginPath();
-                c.moveTo(armOriginX, armOriginY);
+                c.beginPath(); c.moveTo(armOriginX, armOriginY);
 
                 let handX, handY;
                 if (this.isAttacking) {
@@ -431,37 +461,23 @@
                     handX = armOriginX + (facingRight ? 30 : -30);
                     handY = armOriginY + 40;
                 }
-                c.lineTo(handX, handY);
-                c.stroke();
-
+                c.lineTo(handX, handY); c.stroke();
                 this.drawWeapon(handX, handY, facingRight);
             }
 
             drawWeapon(handX, handY, facingRight) {
-                c.fillStyle = '#cbd5e1'; // Metal color
+                c.fillStyle = '#cbd5e1';
                 const dir = facingRight ? 1 : -1;
 
                 if (this.weaponType === 'sword') {
-                    // Blade
                     c.fillRect(handX, handY - 30, 40 * dir, 6);
-                    // Hilt
-                    c.fillStyle = '#475569';
-                    c.fillRect(handX, handY - 5, 10 * dir, 10);
+                    c.fillStyle = '#475569'; c.fillRect(handX, handY - 5, 10 * dir, 10);
                 } else if (this.weaponType === 'axe') {
-                    // Handle
-                    c.fillStyle = '#8B4513';
-                    c.fillRect(handX, handY - 40, 6 * dir, 60);
-                    // Head
-                    c.fillStyle = '#94a3b8';
-                    const headX = handX + (5 * dir);
-                    c.fillRect(headX, handY - 40, 25 * dir, 20);
+                    c.fillStyle = '#8B4513'; c.fillRect(handX, handY - 40, 6 * dir, 60);
+                    c.fillStyle = '#94a3b8'; c.fillRect(handX + (5 * dir), handY - 40, 25 * dir, 20);
                 } else if (this.weaponType === 'spear') {
-                    // Shaft
-                    c.fillStyle = '#8B4513';
-                    c.fillRect(handX - (20 * dir), handY, 100 * dir, 4);
-                    // Tip
-                    c.fillStyle = '#cbd5e1';
-                    c.fillRect(handX + (80 * dir), handY - 1, 15 * dir, 6);
+                    c.fillStyle = '#8B4513'; c.fillRect(handX - (20 * dir), handY, 100 * dir, 4);
+                    c.fillStyle = '#cbd5e1'; c.fillRect(handX + (80 * dir), handY - 1, 15 * dir, 6);
                 }
             }
 
@@ -471,8 +487,6 @@
                     this.position.x += this.velocity.x;
                     this.position.y += this.velocity.y;
                 }
-
-                // Gravity & Floor Collision
                 if (this.position.y + this.height + this.velocity.y >= GROUND_Y) {
                     this.velocity.y = 0;
                     this.position.y = GROUND_Y - this.height;
@@ -480,24 +494,14 @@
                     this.velocity.y += GRAVITY;
                 }
 
-                // Attack Box Sync
-                if (this.lastKey === 'a') {
-                    this.attackBox.offset.x = -this.attackBox.width;
-                } else {
-                    this.attackBox.offset.x = 0;
-                }
+                if (this.lastKey === 'a') this.attackBox.offset.x = -this.attackBox.width;
+                else if (this.lastKey === 'd') this.attackBox.offset.x = 0;
 
-                this.attackBox.position.x = this.position.x + this.attackBox.offset.x; // Fixed offset logic
-                // Ensure attack box is centered on player when attacking
-                if (this.attackBox.offset.x < 0) {
-                    this.attackBox.position.x = this.position.x - (this.attackBox.width - this.width);
-                } else {
-                    this.attackBox.position.x = this.position.x;
-                }
-
+                this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
+                if (this.attackBox.offset.x < 0) this.attackBox.position.x = this.position.x - (this.attackBox.width - this.width);
+                else this.attackBox.position.x = this.position.x;
                 this.attackBox.position.y = this.position.y;
 
-                // Boundary
                 if (this.position.x < 0) this.position.x = 0;
                 if (this.position.x + this.width > canvas.width) this.position.x = canvas.width - this.width;
             }
@@ -505,57 +509,38 @@
             attack() {
                 if (this.isAttacking) return;
                 this.isAttacking = true;
-                setTimeout(() => {
-                    this.isAttacking = false;
-                }, 100 * (6 / this.speed)); // Speed affects recovery
+                setTimeout(() => { this.isAttacking = false; }, 100 * (6 / this.speed));
             }
 
             takeHit(amt) {
                 this.health -= amt;
-                if (this.health <= 0) {
-                    this.health = 0;
-                    this.dead = true;
-                }
+                if (this.health <= 0) { this.health = 0; this.dead = true; }
             }
         }
 
         class Particle {
             constructor({ position, velocity, color }) {
-                this.position = position;
-                this.velocity = velocity;
-                this.radius = Math.random() * 5 + 3;
-                this.color = color;
-                this.alpha = 1;
+                this.position = position; this.velocity = velocity; this.radius = Math.random() * 5 + 3;
+                this.color = color; this.alpha = 1;
             }
             draw() {
-                c.save();
-                c.globalAlpha = this.alpha;
-                c.fillStyle = this.color;
-                c.fillRect(this.position.x, this.position.y, this.radius, this.radius);
-                c.restore();
+                c.save(); c.globalAlpha = this.alpha; c.fillStyle = this.color;
+                c.fillRect(this.position.x, this.position.y, this.radius, this.radius); c.restore();
             }
             update() {
-                this.draw();
-                this.velocity.x *= 0.95;
-                this.velocity.y += 0.3;
-                this.position.x += this.velocity.x;
-                this.position.y += this.velocity.y;
-                this.alpha -= 0.05;
+                this.draw(); this.velocity.x *= 0.95; this.velocity.y += 0.3;
+                this.position.x += this.velocity.x; this.position.y += this.velocity.y; this.alpha -= 0.05;
             }
         }
 
-        // --- 4. Global Variables ---
         let player, enemy;
         let particles = [];
 
-        function createParticles(x, y, color, amount = 10) {
-            for (let i = 0; i < amount; i++) {
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 10; i++) {
                 particles.push(new Particle({
                     position: { x: x, y: y },
-                    velocity: {
-                        x: (Math.random() - 0.5) * 15,
-                        y: (Math.random() - 0.5) * 15
-                    },
+                    velocity: { x: (Math.random() - 0.5) * 15, y: (Math.random() - 0.5) * 15 },
                     color: color
                 }));
             }
@@ -564,9 +549,7 @@
         function screenShake() {
             const intensity = 8;
             canvas.style.transform = `translate(${Math.random() * intensity - intensity / 2}px, ${Math.random() * intensity - intensity / 2}px)`;
-            setTimeout(() => {
-                canvas.style.transform = 'translate(0,0)';
-            }, 50);
+            setTimeout(() => { canvas.style.transform = 'translate(0,0)'; }, 50);
         }
 
         function rectangularCollision({ rectangle1, rectangle2 }) {
@@ -583,6 +566,7 @@
             document.getElementById('winnerText').style.display = 'flex';
             document.getElementById('gameOverScreen').classList.remove('hidden');
             document.getElementById('hud').classList.add('hidden');
+            document.getElementById('mobile-controls').classList.add('hidden'); // Hide controls
 
             if (player.health === enemy.health) {
                 document.getElementById('winnerText').innerText = 'DRAW';
@@ -609,73 +593,40 @@
 
         function startGame() {
             GROUND_Y = canvas.height - 100;
-
             const pStr = parseInt(document.getElementById('strRange').value);
             const pAgi = parseInt(document.getElementById('agiRange').value);
             const pVit = parseInt(document.getElementById('vitRange').value);
 
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
-
-            // Player Setup (Balanced Multipliers for Low Points)
-            // STR: 1pt = 5dmg ... 8pt = 40dmg (Avg 3pt = 15)
-            // AGI: 1pt = 2spd ... 8pt = 16spd (Avg 3pt = 6)
-            // VIT: 1pt = 25hp ... 8pt = 200hp (Avg 3.3pt = ~85)
+            document.getElementById('mobile-controls').classList.remove('hidden'); // Show controls
 
             player = new Sprite({
-                position: { x: 100, y: 0 },
-                velocity: { x: 0, y: 0 },
-                offset: { x: 0, y: 0 },
-                color: '#2ed573'
+                position: { x: 100, y: 0 }, velocity: { x: 0, y: 0 }, offset: { x: 0, y: 0 }, color: '#2ed573'
             });
-            player.maxHealth = pVit * 25;
-            player.health = player.maxHealth;
-            player.speed = 2 + (pAgi * 1.5); // Base speed + scaling
-            player.damage = pStr * 5;
+            player.maxHealth = pVit * 25; player.health = player.maxHealth;
+            player.speed = 2 + (pAgi * 1.5); player.damage = pStr * 5;
             player.weaponType = selectedWeapon;
+            player.lastKey = 'd';
 
-            // Weapon Modifiers
-            if (selectedWeapon === 'axe') {
-                player.damage *= 1.4;
-                player.speed *= 0.85;
-                player.attackBox.width = 80;
-            }
-            if (selectedWeapon === 'spear') {
-                player.damage *= 0.8;
-                player.speed *= 1.1;
-                player.attackBox.width = 180;
-            }
+            if (selectedWeapon === 'axe') { player.damage *= 1.4; player.speed *= 0.85; player.attackBox.width = 80; }
+            if (selectedWeapon === 'spear') { player.damage *= 0.8; player.speed *= 1.1; player.attackBox.width = 180; }
 
-            // Enemy Setup (Random Build)
             enemy = new Sprite({
-                position: { x: canvas.width - 200, y: 0 },
-                velocity: { x: 0, y: 0 },
-                offset: { x: -50, y: 0 },
-                color: '#ff4757'
+                position: { x: canvas.width - 200, y: 0 }, velocity: { x: 0, y: 0 }, offset: { x: -50, y: 0 }, color: '#ff4757'
             });
             enemy.weaponType = ['sword', 'axe', 'spear'][Math.floor(Math.random() * 3)];
+            enemy.lastKey = 'a';
 
-            // Random Stats for Enemy (Total ~10)
             const eStr = Math.floor(Math.random() * 5) + 2;
             const eVit = Math.floor(Math.random() * 5) + 2;
-            const eAgi = 10 - eStr - eVit; // Remainder
+            const eAgi = 10 - eStr - eVit;
 
-            enemy.maxHealth = Math.max(2, eVit) * 25;
-            enemy.health = enemy.maxHealth;
-            enemy.damage = Math.max(2, eStr) * 5;
-            enemy.speed = 2 + (Math.max(1, eAgi) * 1.5);
+            enemy.maxHealth = Math.max(2, eVit) * 25; enemy.health = enemy.maxHealth;
+            enemy.damage = Math.max(2, eStr) * 5; enemy.speed = 2 + (Math.max(1, eAgi) * 1.5);
 
-            // Weapon Modifiers Enemy
-            if (enemy.weaponType === 'axe') {
-                enemy.damage *= 1.4;
-                enemy.speed *= 0.85;
-                enemy.attackBox.width = 80;
-            }
-            if (enemy.weaponType === 'spear') {
-                enemy.damage *= 0.8;
-                enemy.speed *= 1.1;
-                enemy.attackBox.width = 180;
-            }
+            if (enemy.weaponType === 'axe') { enemy.damage *= 1.4; enemy.speed *= 0.85; enemy.attackBox.width = 80; }
+            if (enemy.weaponType === 'spear') { enemy.damage *= 0.8; enemy.speed *= 1.1; enemy.attackBox.width = 180; }
 
             particles = [];
             gameRunning = true;
@@ -684,121 +635,92 @@
             animate();
         }
 
-        // --- 5. Game Loop ---
         function animate() {
             if (!gameRunning) return;
             animationId = window.requestAnimationFrame(animate);
+            c.fillStyle = '#0f172a'; c.fillRect(0, 0, canvas.width, canvas.height);
+            c.fillStyle = '#1e293b'; c.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
 
-            // Draw BG
-            c.fillStyle = '#0f172a';
-            c.fillRect(0, 0, canvas.width, canvas.height);
-            // Floor
-            c.fillStyle = '#1e293b';
-            c.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+            player.update(); enemy.update();
 
-            player.update();
-            enemy.update();
-
-            // Player Move
             player.velocity.x = 0;
-            if (keys.a.pressed && player.lastKey === 'a') {
-                player.velocity.x = -player.speed;
-            } else if (keys.d.pressed && player.lastKey === 'd') {
-                player.velocity.x = player.speed;
-            }
+            if (keys.a.pressed && player.lastKey === 'a') player.velocity.x = -player.speed;
+            else if (keys.d.pressed && player.lastKey === 'd') player.velocity.x = player.speed;
 
-            // AI Logic
+            // AI
             const dist = player.position.x - enemy.position.x;
             enemy.velocity.x = 0;
-
             if (!enemy.dead && !player.dead) {
-                // Face player logic is handled in update() via lastKey simulation or offset
-                // Here we just set velocity
                 const attackRange = enemy.attackBox.width - 20;
-
                 if (Math.abs(dist) > attackRange) {
-                    if (dist > 0) {
-                        enemy.velocity.x = enemy.speed * 0.6;
-                        enemy.lastKey = 'd';
-                    } else {
-                        enemy.velocity.x = -enemy.speed * 0.6;
-                        enemy.lastKey = 'a';
-                    }
+                    if (dist > 0) { enemy.velocity.x = enemy.speed * 0.6; enemy.lastKey = 'd'; }
+                    else { enemy.velocity.x = -enemy.speed * 0.6; enemy.lastKey = 'a'; }
                 } else {
-                    // In range
+                    if (dist > 0) enemy.lastKey = 'd'; else enemy.lastKey = 'a';
                     if (Math.random() < 0.03) enemy.attack();
                 }
-
-                // Random jump
-                if (Math.random() < 0.005 && enemy.position.y + enemy.height >= GROUND_Y) {
-                    enemy.velocity.y = -12;
-                }
+                if (Math.random() < 0.005 && enemy.position.y + enemy.height >= GROUND_Y) enemy.velocity.y = -12;
             }
 
-            // Hit Detection
-            // Player Attack
-            if (rectangularCollision({ rectangle1: player, rectangle2: enemy }) &&
-                player.isAttacking && player.currentAttackFrame !== frameCount) {
-
-                player.isAttacking = false;
-                enemy.takeHit(player.damage);
+            // Collisions
+            if (rectangularCollision({ rectangle1: player, rectangle2: enemy }) && player.isAttacking && player.currentAttackFrame !== frameCount) {
+                player.isAttacking = false; enemy.takeHit(player.damage);
                 createParticles(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, '#ff4757');
-                screenShake();
-                document.getElementById('enemyHealth').style.width = (enemy.health / enemy.maxHealth) * 100 + '%';
+                screenShake(); document.getElementById('enemyHealth').style.width = (enemy.health / enemy.maxHealth) * 100 + '%';
                 if (enemy.health <= 0) determineWinner({ player, enemy, timerId });
             }
-
-            // Enemy Attack
-            if (rectangularCollision({ rectangle1: enemy, rectangle2: player }) &&
-                enemy.isAttacking) {
-
-                enemy.isAttacking = false;
-                player.takeHit(enemy.damage);
+            if (rectangularCollision({ rectangle1: enemy, rectangle2: player }) && enemy.isAttacking) {
+                enemy.isAttacking = false; player.takeHit(enemy.damage);
                 createParticles(player.position.x + player.width / 2, player.position.y + player.height / 2, '#2ed573');
-                screenShake();
-                document.getElementById('playerHealth').style.width = (player.health / player.maxHealth) * 100 + '%';
+                screenShake(); document.getElementById('playerHealth').style.width = (player.health / player.maxHealth) * 100 + '%';
                 if (player.health <= 0) determineWinner({ player, enemy, timerId });
             }
 
-            // Particles
             particles.forEach((particle, index) => {
-                if (particle.alpha <= 0) particles.splice(index, 1);
-                else particle.update();
+                if (particle.alpha <= 0) particles.splice(index, 1); else particle.update();
             });
         }
 
         let frameCount = 0;
         setInterval(() => frameCount++, 1000 / 60);
 
-        // --- 6. Input ---
+        // --- Input Listeners (Keyboard) ---
         window.addEventListener('keydown', (event) => {
             if (!gameRunning) return;
             switch (event.key.toLowerCase()) {
-                case 'd':
-                    keys.d.pressed = true;
-                    player.lastKey = 'd';
-                    break;
-                case 'a':
-                    keys.a.pressed = true;
-                    player.lastKey = 'a';
-                    break;
-                case 'w':
-                    if (player.position.y + player.height >= GROUND_Y) {
-                        player.velocity.y = player.jumpPower;
-                    }
-                    break;
-                case ' ':
-                    player.attack();
-                    break;
+                case 'd': keys.d.pressed = true; player.lastKey = 'd'; break;
+                case 'a': keys.a.pressed = true; player.lastKey = 'a'; break;
+                case 'w': if (player.position.y + player.height >= GROUND_Y) player.velocity.y = player.jumpPower; break;
+                case ' ': player.attack(); break;
             }
         });
-
         window.addEventListener('keyup', (event) => {
             switch (event.key.toLowerCase()) {
                 case 'd': keys.d.pressed = false; break;
                 case 'a': keys.a.pressed = false; break;
             }
         });
+
+        // --- Input Listeners (Touch / Mobile) ---
+        function setupTouch(btnId, actionDown, actionUp) {
+            const btn = document.getElementById(btnId);
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Prevent scroll/zoom
+                btn.classList.add('active');
+                if (actionDown) actionDown();
+            }, { passive: false });
+
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                btn.classList.remove('active');
+                if (actionUp) actionUp();
+            }, { passive: false });
+        }
+
+        setupTouch('btnLeft', () => { keys.a.pressed = true; player.lastKey = 'a'; }, () => { keys.a.pressed = false; });
+        setupTouch('btnRight', () => { keys.d.pressed = true; player.lastKey = 'd'; }, () => { keys.d.pressed = false; });
+        setupTouch('btnJump', () => { if (player.position.y + player.height >= GROUND_Y) player.velocity.y = player.jumpPower; }, null);
+        setupTouch('btnAtk', () => { player.attack(); }, null);
 
     </script>
 </body>

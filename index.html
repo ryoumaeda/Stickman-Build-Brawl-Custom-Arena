@@ -4,38 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>カスタム棒人間バトル：Mobile Edition</title>
-    <meta name="description" content="スマホ対応。ステータスを割り振って戦う棒人間格闘ゲーム。">
-    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Roboto+Mono:wght@400;700&display=swap"
+    <title>Stick Forge: Chaos Edition</title>
+    <meta name="description" content="Build your weapon, capture your face, smash your enemies.">
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Press+Start+2P&display=swap"
         rel="stylesheet">
     <style>
         :root {
-            --bg-color: #121212;
-            --ui-bg: rgba(20, 20, 30, 0.95);
-            --accent: #ff4757;
-            --text: #ffffff;
-            --neon-blue: #2ed573;
-            --neon-yellow: #ffa502;
+            --bg: #0f172a;
+            --ui: rgba(15, 23, 42, 0.95);
+            --accent: #ef4444;
+            --neon: #22d3ee;
+            --gold: #fbbf24;
+            --text: #f8fafc;
         }
 
         body {
             margin: 0;
             overflow: hidden;
-            background: var(--bg-color);
-            font-family: 'Roboto Mono', monospace;
+            background: var(--bg);
+            font-family: 'Press Start 2P', monospace;
             color: var(--text);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             touch-action: none;
-            /* スマホでのスクロール防止 */
-            -webkit-user-select: none;
-            /* テキスト選択防止 */
             user-select: none;
         }
 
-        /* UI Container */
+        /* Layout */
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
         #ui-layer {
             position: absolute;
             top: 0;
@@ -44,230 +43,310 @@
             height: 100%;
             pointer-events: none;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 10;
         }
 
-        /* Screens */
         .screen {
             pointer-events: auto;
-            background: var(--ui-bg);
-            padding: 30px;
-            border-radius: 12px;
-            border: 2px solid #333;
+            background: var(--ui);
+            padding: 20px;
+            border: 4px solid var(--neon);
+            box-shadow: 0 0 30px var(--neon);
             text-align: center;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
-            max-width: 600px;
-            width: 90%;
-            backdrop-filter: blur(10px);
+            max-width: 800px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen.active {
+            display: flex;
         }
 
         h1 {
-            font-family: 'Black Ops One', cursive;
+            font-family: 'Black Ops One';
+            color: var(--neon);
+            text-shadow: 4px 4px 0px #000;
             font-size: 2rem;
-            margin: 0 0 10px 0;
-            color: var(--accent);
-            text-transform: uppercase;
-            text-shadow: 2px 2px 0px #fff;
-            line-height: 1.2;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* Customization Controls */
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            font-size: 1rem;
-            border-bottom: 1px solid #444;
-            padding-bottom: 10px;
-        }
-
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             margin: 10px 0;
-            font-size: 1rem;
         }
 
-        .stat-value {
-            color: var(--neon-blue);
-            font-weight: bold;
-            width: 30px;
-            text-align: right;
-        }
-
-        input[type="range"] {
-            width: 50%;
-            cursor: pointer;
-            accent-color: var(--accent);
-        }
-
-        .weapon-select {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .weapon-btn {
-            background: #333;
-            border: 2px solid #555;
+        button {
+            background: #334155;
+            border: 2px solid #fff;
             color: #fff;
-            padding: 8px 12px;
-            cursor: pointer;
+            padding: 10px 20px;
             font-family: inherit;
+            cursor: pointer;
+            margin: 5px;
             transition: 0.2s;
-            font-size: 0.8rem;
-            border-radius: 4px;
+            text-transform: uppercase;
         }
 
-        .weapon-btn.selected {
-            border-color: var(--neon-yellow);
-            background: #444;
-            box-shadow: 0 0 10px rgba(255, 165, 2, 0.4);
+        button:hover {
+            background: var(--neon);
+            color: #000;
             transform: scale(1.05);
         }
 
-        .action-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 1.2rem;
-            font-family: 'Black Ops One', cursive;
+        button:active {
+            transform: scale(0.95);
+        }
+
+        /* Crafting Grid */
+        #crafting-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        #pixel-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 2px;
+            background: #333;
+            padding: 5px;
+            border: 2px solid #555;
+            touch-action: none;
+        }
+
+        .pixel {
+            width: 25px;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.05);
             cursor: pointer;
-            margin-top: 15px;
-            transform: skew(-10deg);
-            transition: 0.2s;
-            box-shadow: 0 4px 0 #b33939;
+            border: 1px solid #444;
         }
 
-        .action-btn:hover {
-            transform: skew(-10deg) translateY(-2px);
+        .pixel:hover {
+            border-color: #fff;
         }
 
-        .action-btn:active {
-            transform: skew(-10deg) translateY(2px);
-            box-shadow: 0 2px 0 #b33939;
+        /* Material Palette */
+        #palette {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .mat-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #555;
+            position: relative;
+        }
+
+        .mat-btn.selected {
+            border-color: var(--gold);
+            box-shadow: 0 0 10px var(--gold);
+            transform: scale(1.1);
+        }
+
+        .mat-wood {
+            background: #854d0e;
+        }
+
+        /* Speed */
+        .mat-iron {
+            background: #cbd5e1;
+        }
+
+        /* Dmg */
+        .mat-magic {
+            background: #3b82f6;
+        }
+
+        /* Range */
+        .mat-tnt {
+            background: #ef4444;
+        }
+
+        /* Explosive */
+        .mat-eraser {
+            background: #000;
+            border: 2px dashed #666;
+        }
+
+        /* Face Upload */
+        .upload-container {
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #face-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid var(--neon);
+            object-fit: cover;
+            background: #000;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            background: var(--accent);
+            padding: 8px 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 #000;
         }
 
         /* HUD */
         #hud {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
             display: flex;
             justify-content: space-between;
-            align-items: center;
             pointer-events: none;
             z-index: 5;
         }
 
-        .health-bar-container {
+        .player-card {
+            display: flex;
+            flex-direction: column;
             width: 40%;
-            height: 20px;
-            background: #333;
-            border: 2px solid #fff;
-            position: relative;
-            transform: skew(-20deg);
+            gap: 5px;
         }
 
-        .health-bar {
-            height: 100%;
-            background: var(--neon-blue);
+        .hp-bar-bg {
             width: 100%;
-            transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 15px;
+            background: #000;
+            border: 2px solid #fff;
+            transform: skew(-15deg);
         }
 
-        .enemy-bar {
-            background: var(--accent);
-            float: right;
+        .hp-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: var(--neon);
+            transition: width 0.2s;
         }
 
-        #timer {
-            font-family: 'Black Ops One', cursive;
+        .dmg-percent {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        #p1-percent {
+            color: var(--neon);
+        }
+
+        #p2-percent {
+            color: var(--accent);
+            text-align: right;
+        }
+
+        /* Combo & Event Text */
+        #event-display {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        .event-text {
+            font-size: 1.2rem;
+            color: var(--gold);
+            text-shadow: 2px 2px 0 #000;
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        .combo-text {
             font-size: 2rem;
-            color: white;
-            text-shadow: 0 0 10px black;
+            color: #fff;
+            font-style: italic;
+            -webkit-text-stroke: 1px #000;
+            position: absolute;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
 
-        /* --- Mobile Controls (New!) --- */
+        /* Mobile Controls */
         #mobile-controls {
             position: absolute;
             bottom: 20px;
             width: 100%;
-            height: 150px;
+            height: 160px;
+            pointer-events: none;
             display: flex;
             justify-content: space-between;
-            padding: 0 30px;
+            padding: 0 40px;
             box-sizing: border-box;
-            pointer-events: none;
-            /* UIレイヤーの下だが、ボタン自体はpointer-events:autoにする */
             z-index: 20;
+            opacity: 0.6;
         }
 
-        .control-group {
+        .dpad-area,
+        .action-area {
             display: flex;
             gap: 15px;
             align-items: flex-end;
             pointer-events: auto;
         }
 
-        .touch-btn {
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(4px);
-            border-radius: 50%;
-            color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Black Ops One';
-            font-size: 1.5rem;
-            user-select: none;
-            touch-action: manipulation;
-            transition: background 0.1s, transform 0.1s;
-        }
-
-        .touch-btn:active,
-        .touch-btn.active {
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(0.95);
-            border-color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* Directional Pad */
-        .btn-move {
-            width: 60px;
-            height: 60px;
-        }
-
-        /* Action Buttons */
-        .btn-jump {
+        .btn {
             width: 70px;
             height: 70px;
-            border-color: var(--neon-blue);
-            color: var(--neon-blue);
-            font-size: 1rem;
-            margin-bottom: 20px;
-            /* Offset for thumb arc */
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(5px);
+            display: grid;
+            place-items: center;
+            font-size: 1.5rem;
+            color: white;
+            touch-action: manipulation;
+        }
+
+        .btn:active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0.9);
         }
 
         .btn-atk {
-            width: 90px;
-            height: 90px;
             border-color: var(--accent);
-            color: var(--accent);
-            background: rgba(255, 71, 87, 0.15);
-            font-size: 1.2rem;
+            background: rgba(239, 68, 68, 0.2);
+            width: 85px;
+            height: 85px;
+        }
+
+        @keyframes pulse {
+            from {
+                transform: scale(1);
+            }
+
+            to {
+                transform: scale(1.1);
+            }
+        }
+
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
@@ -276,451 +355,648 @@
 
     <canvas id="gameCanvas"></canvas>
 
-    <div id="mobile-controls" class="hidden">
-        <div class="control-group">
-            <div id="btnLeft" class="touch-btn btn-move">←</div>
-            <div id="btnRight" class="touch-btn btn-move">→</div>
+    <div id="event-display"></div>
+
+    <div id="hud" class="hidden">
+        <div class="player-card">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <img id="hud-face-p1" style="width:40px; height:40px; border-radius:50%; border:2px solid #fff;">
+                <span id="p1-percent" class="dmg-percent">0%</span>
+            </div>
+            <div class="hp-bar-bg">
+                <div id="p1-hp" class="hp-bar-fill"></div>
+            </div>
         </div>
-        <div class="control-group">
-            <div id="btnJump" class="touch-btn btn-jump">JUMP</div>
-            <div id="btnAtk" class="touch-btn btn-atk">ATK</div>
+        <div style="font-size:2rem; color:#fff; text-shadow:0 0 10px #000;">VS</div>
+        <div class="player-card" style="align-items: flex-end;">
+            <div style="display:flex; align-items:center; gap:10px; flex-direction:row-reverse;">
+                <div
+                    style="width:40px; height:40px; border-radius:50%; background:var(--accent); border:2px solid #fff;">
+                </div>
+                <span id="p2-percent" class="dmg-percent" style="color:var(--accent)">0%</span>
+            </div>
+            <div class="hp-bar-bg" style="border-color:var(--accent);">
+                <div id="p2-hp" class="hp-bar-fill" style="background:var(--accent);"></div>
+            </div>
         </div>
     </div>
 
     <div id="ui-layer">
 
-        <div id="hud" class="hidden">
-            <div class="health-bar-container">
-                <div id="playerHealth" class="health-bar"></div>
-            </div>
-            <div id="timer">60</div>
-            <div class="health-bar-container" style="border-color: #ff4757;">
-                <div id="enemyHealth" class="health-bar enemy-bar"></div>
-            </div>
-        </div>
-
-        <div id="startScreen" class="screen">
+        <div id="craft-screen" class="screen active">
             <h1>Stick Forge</h1>
-            <p style="letter-spacing: 2px; margin-bottom: 15px; font-size:0.9rem;">BUILD YOUR FIGHTER</p>
+            <p style="font-size:0.7rem; color:#aaa; margin-bottom:15px;">MINECRAFT x SMASH BROS</p>
 
-            <div class="stat-header">
-                <span>TOTAL POINTS</span>
-                <span id="pointsDisplay" style="color:var(--neon-yellow);">7 / 10</span>
-            </div>
-
-            <div class="stat-row">
-                <label>STR (攻撃)</label>
-                <input type="range" id="strRange" min="1" max="8" value="1" oninput="updatePoints('strRange')">
-                <span id="strVal" class="stat-value">1</span>
-            </div>
-            <div class="stat-row">
-                <label>AGI (速度)</label>
-                <input type="range" id="agiRange" min="1" max="8" value="1" oninput="updatePoints('agiRange')">
-                <span id="agiVal" class="stat-value">1</span>
-            </div>
-            <div class="stat-row">
-                <label>VIT (体力)</label>
-                <input type="range" id="vitRange" min="1" max="8" value="1" oninput="updatePoints('vitRange')">
-                <span id="vitVal" class="stat-value">1</span>
+            <div class="upload-container">
+                <img id="face-preview"
+                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='38' fill='%23333' stroke='%23fff' stroke-width='2'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23fff' font-family='monospace' font-size='10'%3ENO FACE%3C/text%3E%3C/svg%3E">
+                <label class="file-label">
+                    📸 CAMERA / UPLOAD
+                    <input type="file" id="faceInput" accept="image/*" capture="user" onchange="handleFaceUpload(this)">
+                </label>
             </div>
 
-            <p style="margin-top: 20px; font-size: 0.8rem; color: #aaa;">SELECT WEAPON</p>
-            <div class="weapon-select">
-                <button class="weapon-btn selected" onclick="selectWeapon('sword', this)">SWORD</button>
-                <button class="weapon-btn" onclick="selectWeapon('axe', this)">AXE</button>
-                <button class="weapon-btn" onclick="selectWeapon('spear', this)">SPEAR</button>
+            <div style="width:100%; height:2px; background:#444; margin:10px 0;"></div>
+
+            <p style="color:var(--gold); font-size:0.8rem;">CRAFT YOUR WEAPON</p>
+            <div id="palette">
+                <div class="mat-btn mat-wood selected" onclick="selectMat('wood', this)" title="Speed"></div>
+                <div class="mat-btn mat-iron" onclick="selectMat('iron', this)" title="Damage"></div>
+                <div class="mat-btn mat-magic" onclick="selectMat('magic', this)" title="Magic Shot"></div>
+                <div class="mat-btn mat-tnt" onclick="selectMat('tnt', this)" title="Explosion"></div>
+                <div class="mat-btn mat-eraser" onclick="selectMat(null, this)" title="Erase"></div>
+            </div>
+            <div id="crafting-area">
+                <div id="pixel-grid"></div>
+            </div>
+            <div style="font-size:0.6rem; color:#888; margin-bottom:10px;">
+                Grid 10x10. Handle is at bottom-center.
             </div>
 
-            <button class="action-btn" onclick="startGame()">BATTLE START</button>
-            <p style="margin-top:10px; font-size:0.7rem; color:#aaa;">PC: W/A/D/Space | Mobile: Touch Controls</p>
+            <button onclick="startGame()"
+                style="width:80%; font-size:1.2rem; border-color:var(--neon); color:var(--neon);">BATTLE START</button>
         </div>
 
-        <div id="gameOverScreen" class="screen hidden">
-            <h1 id="winnerText">YOU WIN</h1>
-            <button class="action-btn" onclick="location.reload()">RE-FORGE</button>
+        <div id="result-screen" class="screen">
+            <h1 id="result-text" style="font-size:3rem;">VICTORY</h1>
+            <div id="loot-display" style="margin:20px; color:var(--gold);">
+                LOOT ACQUIRED: <br>
+                <span style="font-size:0.8rem; color:#fff;">+50 Iron Blocks</span>
+            </div>
+            <button onclick="location.reload()">FORGE AGAIN</button>
+        </div>
+    </div>
+
+    <div id="mobile-controls" class="hidden">
+        <div class="dpad-area">
+            <div class="btn" id="btn-l">←</div>
+            <div class="btn" id="btn-r">→</div>
+        </div>
+        <div class="action-area">
+            <div class="btn" id="btn-j" style="border-color:var(--neon);">JMP</div>
+            <div class="btn btn-atk" id="btn-a">ATK</div>
         </div>
     </div>
 
     <script>
-        // --- 1. Game Constants & Setup ---
+        /**
+         * STICK FORGE: CHAOS EDITION
+         * Logic: Voxel Editor -> Custom Stats -> Physics Engine with Knockback
+         */
+
+        // --- 1. SETUP & CONFIG ---
         const canvas = document.getElementById('gameCanvas');
-        const c = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d');
+        let WIDTH, HEIGHT;
+        const GRAVITY = 0.6;
+        let GROUND_Y;
 
         function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            // Recalculate Ground Y on resize
-            if (window.gameRunning) GROUND_Y = canvas.height - 100;
+            WIDTH = window.innerWidth;
+            HEIGHT = window.innerHeight;
+            canvas.width = WIDTH;
+            canvas.height = HEIGHT;
+            GROUND_Y = HEIGHT - 80;
         }
         window.addEventListener('resize', resize);
         resize();
 
-        const GRAVITY = 0.7;
-        let GROUND_Y = canvas.height - 100;
-        const MAX_TOTAL_POINTS = 10;
-
-        const keys = {
-            a: { pressed: false },
-            d: { pressed: false },
-            w: { pressed: false },
-            space: { pressed: false }
+        // Game State
+        const state = {
+            screen: 'craft', // craft, game, result
+            running: false,
+            frame: 0,
+            pixels: [], // Player weapon data
+            faceImg: null
         };
 
-        let animationId;
-        let timer = 60;
-        let timerId;
-        let gameRunning = false;
+        // --- 2. CRAFTING SYSTEM (Minecraft Logic) ---
+        const GRID_SIZE = 10;
+        let currentMat = 'wood';
+        const weaponGrid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(null));
 
-        // --- 2. Logic Functions ---
+        // Init Grid UI
+        const gridEl = document.getElementById('pixel-grid');
+        for (let y = 0; y < GRID_SIZE; y++) {
+            for (let x = 0; x < GRID_SIZE; x++) {
+                const div = document.createElement('div');
+                div.className = 'pixel';
+                div.dataset.x = x; div.dataset.y = y;
+                // Pre-fill a simple sword shape
+                if (x === 4 && y > 2) { weaponGrid[y][x] = 'wood'; div.className = 'pixel mat-wood'; } // Handle
+                if (x === 4 && y <= 2) { weaponGrid[y][x] = 'iron'; div.className = 'pixel mat-iron'; } // Blade
 
-        function updatePoints(changedId) {
-            const strInput = document.getElementById('strRange');
-            const agiInput = document.getElementById('agiRange');
-            const vitInput = document.getElementById('vitRange');
-
-            let str = parseInt(strInput.value);
-            let agi = parseInt(agiInput.value);
-            let vit = parseInt(vitInput.value);
-            let currentTotal = str + agi + vit;
-
-            if (currentTotal > MAX_TOTAL_POINTS) {
-                const excess = currentTotal - MAX_TOTAL_POINTS;
-                if (changedId === 'strRange') { str -= excess; strInput.value = str; }
-                else if (changedId === 'agiRange') { agi -= excess; agiInput.value = agi; }
-                else if (changedId === 'vitRange') { vit -= excess; vitInput.value = vit; }
-                currentTotal = MAX_TOTAL_POINTS;
+                div.onpointerdown = (e) => {
+                    e.target.setPointerCapture(e.pointerId);
+                    paintPixel(x, y, div);
+                };
+                div.onpointermove = (e) => {
+                    if (e.buttons === 1) paintPixel(x, y, div);
+                };
+                gridEl.appendChild(div);
             }
-
-            document.getElementById('strVal').innerText = str;
-            document.getElementById('agiVal').innerText = agi;
-            document.getElementById('vitVal').innerText = vit;
-            const remaining = MAX_TOTAL_POINTS - currentTotal;
-            document.getElementById('pointsDisplay').innerText = `${currentTotal} / ${MAX_TOTAL_POINTS}`;
-            document.getElementById('pointsDisplay').style.color = remaining === 0 ? 'var(--neon-blue)' : 'var(--neon-yellow)';
         }
-        updatePoints();
 
-        let selectedWeapon = 'sword';
-        function selectWeapon(type, btn) {
-            selectedWeapon = type;
-            document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('selected'));
+        function selectMat(mat, btn) {
+            currentMat = mat;
+            document.querySelectorAll('.mat-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
         }
 
-        // --- 3. Classes ---
+        function paintPixel(x, y, el) {
+            weaponGrid[y][x] = currentMat;
+            el.className = 'pixel ' + (currentMat ? 'mat-' + currentMat : '');
+        }
 
-        class Sprite {
-            constructor({ position, velocity, color = 'red', offset = { x: 0, y: 0 } }) {
-                this.position = position;
-                this.velocity = velocity;
-                this.width = 50;
-                this.height = 150;
-                this.lastKey;
-                this.attackBox = {
-                    position: { x: this.position.x, y: this.position.y },
-                    offset: offset,
-                    width: 100,
-                    height: 50
+        function calculateWeaponStats() {
+            let stats = { dmg: 5, weight: 0, magic: 0, explosive: 0, pixels: [] };
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const mat = weaponGrid[y][x];
+                    if (mat) {
+                        stats.pixels.push({ x: x - 4, y: y - 9, mat }); // Offset to handle
+                        if (mat === 'iron') { stats.dmg += 2; stats.weight += 1.5; }
+                        if (mat === 'wood') { stats.dmg += 0.5; stats.weight += 0.2; }
+                        if (mat === 'magic') { stats.magic += 1; stats.weight += 0.5; }
+                        if (mat === 'tnt') { stats.explosive += 1; stats.weight += 1; }
+                    }
+                }
+            }
+            return stats;
+        }
+
+        // --- 3. FACE UPLOAD ---
+        function handleFaceUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        state.faceImg = img;
+                        document.getElementById('face-preview').src = e.target.result;
+                        document.getElementById('hud-face-p1').src = e.target.result;
+                    }
                 };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // --- 4. GAME ENGINE (Smash Bros Physics) ---
+        class Entity {
+            constructor(x, y, color, isPlayer = false) {
+                this.pos = { x, y };
+                this.vel = { x: 0, y: 0 };
                 this.color = color;
-                this.isAttacking;
-                this.health = 100;
-                this.maxHealth = 100;
-                this.damage = 10;
-                this.speed = 5;
-                this.jumpPower = -15;
-                this.weaponType = 'sword';
-                this.dead = false;
+                this.width = 40;
+                this.height = 80;
+                this.isPlayer = isPlayer;
+
+                // Stats
+                this.hp = 100;
+                this.percent = 0; // Smash style damage %
+                this.stats = isPlayer ? calculateWeaponStats() : this.generateEnemyWeapon();
+
+                // State
+                this.facing = 1; // 1 Right, -1 Left
+                this.isAttacking = false;
+                this.attackCooldown = 0;
+                this.jumps = 2; // Double jump
+                this.hitStun = 0;
+                this.attackFrame = 0;
             }
 
-            draw() {
-                c.strokeStyle = this.color;
-                c.lineWidth = 4;
-                c.fillStyle = this.color;
-
-                const x = this.position.x;
-                const y = this.position.y;
-                const w = this.width;
-                const h = this.height;
-
-                // Body Drawing
-                c.beginPath(); c.arc(x + w / 2, y, 20, 0, Math.PI * 2); c.stroke();
-                c.beginPath(); c.moveTo(x + w / 2, y + 20); c.lineTo(x + w / 2, y + 80); c.stroke();
-                c.beginPath(); c.moveTo(x + w / 2, y + 80); c.lineTo(x, y + h); c.moveTo(x + w / 2, y + 80); c.lineTo(x + w, y + h); c.stroke();
-
-                const facingRight = this.attackBox.offset.x >= 0;
-                const armOriginX = x + w / 2;
-                const armOriginY = y + 40;
-                c.beginPath(); c.moveTo(armOriginX, armOriginY);
-
-                let handX, handY;
-                if (this.isAttacking) {
-                    handX = armOriginX + (facingRight ? 60 : -60);
-                    handY = armOriginY + 10;
-                } else {
-                    handX = armOriginX + (facingRight ? 30 : -30);
-                    handY = armOriginY + 40;
-                }
-                c.lineTo(handX, handY); c.stroke();
-                this.drawWeapon(handX, handY, facingRight);
-            }
-
-            drawWeapon(handX, handY, facingRight) {
-                c.fillStyle = '#cbd5e1';
-                const dir = facingRight ? 1 : -1;
-
-                if (this.weaponType === 'sword') {
-                    c.fillRect(handX, handY - 30, 40 * dir, 6);
-                    c.fillStyle = '#475569'; c.fillRect(handX, handY - 5, 10 * dir, 10);
-                } else if (this.weaponType === 'axe') {
-                    c.fillStyle = '#8B4513'; c.fillRect(handX, handY - 40, 6 * dir, 60);
-                    c.fillStyle = '#94a3b8'; c.fillRect(handX + (5 * dir), handY - 40, 25 * dir, 20);
-                } else if (this.weaponType === 'spear') {
-                    c.fillStyle = '#8B4513'; c.fillRect(handX - (20 * dir), handY, 100 * dir, 4);
-                    c.fillStyle = '#cbd5e1'; c.fillRect(handX + (80 * dir), handY - 1, 15 * dir, 6);
-                }
+            generateEnemyWeapon() {
+                // Procedural Enemy Weapon
+                const mats = ['iron', 'wood', 'magic', 'tnt'];
+                const mat = mats[Math.floor(Math.random() * mats.length)];
+                let pixels = [];
+                // Simple shape
+                for (let i = 0; i < 6; i++) pixels.push({ x: 0, y: -i, mat: mat });
+                return { dmg: 8 + Math.random() * 5, weight: 5, magic: mat === 'magic' ? 5 : 0, explosive: mat === 'tnt' ? 5 : 0, pixels };
             }
 
             update() {
-                this.draw();
-                if (!this.dead) {
-                    this.position.x += this.velocity.x;
-                    this.position.y += this.velocity.y;
+                if (this.hitStun > 0) {
+                    this.hitStun--;
+                    this.pos.x += this.vel.x;
+                    this.pos.y += this.vel.y;
+                    this.vel.x *= 0.9; // Friction in air
+                    this.vel.y += GRAVITY;
+                    this.checkBounds();
+                    return;
                 }
-                if (this.position.y + this.height + this.velocity.y >= GROUND_Y) {
-                    this.velocity.y = 0;
-                    this.position.y = GROUND_Y - this.height;
+
+                // Physics
+                this.pos.x += this.vel.x;
+                this.pos.y += this.vel.y;
+
+                // Gravity
+                if (this.pos.y + this.height < GROUND_Y) {
+                    this.vel.y += GRAVITY;
                 } else {
-                    this.velocity.y += GRAVITY;
+                    this.vel.y = 0;
+                    this.pos.y = GROUND_Y - this.height;
+                    this.jumps = 2;
                 }
 
-                if (this.lastKey === 'a') this.attackBox.offset.x = -this.attackBox.width;
-                else if (this.lastKey === 'd') this.attackBox.offset.x = 0;
+                // Friction
+                this.vel.x *= 0.8;
 
-                this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
-                if (this.attackBox.offset.x < 0) this.attackBox.position.x = this.position.x - (this.attackBox.width - this.width);
-                else this.attackBox.position.x = this.position.x;
-                this.attackBox.position.y = this.position.y;
+                // Cooldowns
+                if (this.attackCooldown > 0) this.attackCooldown--;
 
-                if (this.position.x < 0) this.position.x = 0;
-                if (this.position.x + this.width > canvas.width) this.position.x = canvas.width - this.width;
+                this.checkBounds();
+            }
+
+            checkBounds() {
+                if (this.pos.x < 0) { this.pos.x = 0; this.vel.x *= -0.5; }
+                if (this.pos.x + this.width > WIDTH) { this.pos.x = WIDTH - this.width; this.vel.x *= -0.5; }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.pos.x + this.width / 2, this.pos.y);
+
+                // Draw Body (Stickman)
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+
+                // Legs
+                ctx.moveTo(0, this.height / 2); ctx.lineTo(-10, this.height);
+                ctx.moveTo(0, this.height / 2); ctx.lineTo(10, this.height);
+                // Torso
+                ctx.moveTo(0, this.height / 2); ctx.lineTo(0, 0);
+
+                // Arms (Animate on attack)
+                let armX = this.facing * 20;
+                let armY = 20;
+                let handRot = 0;
+
+                if (this.isAttacking) {
+                    const progress = 10 - this.attackCooldown; // Animation frame
+                    armX = this.facing * 40;
+                    armY = 10 + (progress * 2);
+                    handRot = this.facing * (Math.PI / 4 + progress * 0.2);
+                }
+
+                ctx.moveTo(0, 10); ctx.lineTo(armX, armY);
+                ctx.stroke();
+
+                // Draw Head (Face or Circle)
+                if (this.isPlayer && state.faceImg) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(0, -10, 20, 0, Math.PI * 2);
+                    ctx.clip();
+                    ctx.drawImage(state.faceImg, -20, -30, 40, 40);
+                    ctx.restore();
+                    // Border
+                    ctx.beginPath(); ctx.arc(0, -10, 20, 0, Math.PI * 2); ctx.stroke();
+                } else {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath(); ctx.arc(0, -10, 15, 0, Math.PI * 2); ctx.fill();
+                }
+
+                // Draw Voxel Weapon
+                ctx.translate(armX, armY);
+                ctx.rotate(handRot);
+                // Swing rotation
+                if (this.isAttacking) ctx.rotate(this.facing * Math.PI / 2);
+
+                const pixelSize = 4;
+                this.stats.pixels.forEach(p => {
+                    ctx.fillStyle = this.getMatColor(p.mat);
+                    // Flip x if facing left
+                    const px = this.facing === 1 ? p.x : -p.x;
+                    ctx.fillRect(px * pixelSize, p.y * pixelSize, pixelSize, pixelSize);
+                });
+
+                ctx.restore();
+            }
+
+            getMatColor(mat) {
+                switch (mat) {
+                    case 'wood': return '#a0522d';
+                    case 'iron': return '#cbd5e1';
+                    case 'magic': return '#60a5fa';
+                    case 'tnt': return '#ef4444';
+                    default: return '#fff';
+                }
             }
 
             attack() {
-                if (this.isAttacking) return;
+                if (this.attackCooldown > 0 || this.hitStun > 0) return;
+
+                // Heavy weapons are slower
+                const speedMod = Math.max(5, 15 - (this.stats.weight / 5));
+                this.attackCooldown = Math.floor(speedMod);
                 this.isAttacking = true;
-                setTimeout(() => { this.isAttacking = false; }, 100 * (6 / this.speed));
+                setTimeout(() => this.isAttacking = false, 200);
+
+                // Shoot Magic?
+                if (this.stats.magic > 0) {
+                    projectiles.push(new Projectile(
+                        this.pos.x + this.width / 2 + (this.facing * 30),
+                        this.pos.y + 30,
+                        this.facing * 15,
+                        this.stats.magic * 2,
+                        this.isPlayer
+                    ));
+                }
             }
 
-            takeHit(amt) {
-                this.health -= amt;
-                if (this.health <= 0) { this.health = 0; this.dead = true; }
+            takeDamage(amount, knockbackDir) {
+                this.percent += amount;
+                this.hp -= amount * 0.2; // HP drops slower, Percent goes up fast
+
+                // Smash Knockback Formula
+                const force = (this.percent / 10) * 2 + (amount * 0.5);
+
+                this.vel.x = knockbackDir * force;
+                this.vel.y = -force * 0.8; // Pop up
+                this.hitStun = Math.floor(force * 2);
+
+                // Text Popup
+                showCombo(Math.floor(amount), this.pos.x, this.pos.y);
+                screenShake(Math.floor(force));
+                createParticles(this.pos.x, this.pos.y, this.color);
+
+                // Check Death
+                if (this.hp <= 0) endGame(!this.isPlayer);
             }
         }
 
-        class Particle {
-            constructor({ position, velocity, color }) {
-                this.position = position; this.velocity = velocity; this.radius = Math.random() * 5 + 3;
-                this.color = color; this.alpha = 1;
-            }
-            draw() {
-                c.save(); c.globalAlpha = this.alpha; c.fillStyle = this.color;
-                c.fillRect(this.position.x, this.position.y, this.radius, this.radius); c.restore();
+        class Projectile {
+            constructor(x, y, vx, dmg, fromPlayer) {
+                this.x = x; this.y = y; this.vx = vx;
+                this.dmg = dmg; this.fromPlayer = fromPlayer;
+                this.active = true;
+                this.color = fromPlayer ? '#22d3ee' : '#ef4444';
             }
             update() {
-                this.draw(); this.velocity.x *= 0.95; this.velocity.y += 0.3;
-                this.position.x += this.velocity.x; this.position.y += this.velocity.y; this.alpha -= 0.05;
+                this.x += this.vx;
+                ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, 6, 0, Math.PI * 2); ctx.fill();
+                // Trail
+                ctx.fillStyle = `rgba(${this.fromPlayer ? '34,211,238' : '239,68,68'}, 0.3)`;
+                ctx.fillRect(this.x - this.vx, this.y - 4, this.vx * 2, 8);
+
+                if (this.x < 0 || this.x > WIDTH) this.active = false;
             }
         }
 
+        // --- 5. GLOBAL VARIABLES & PARTICLES ---
         let player, enemy;
+        let projectiles = [];
         let particles = [];
+        let shake = 0;
+        let comboCount = 0;
+        let comboTimer = null;
 
-        function createParticles(x, y, color) {
-            for (let i = 0; i < 10; i++) {
-                particles.push(new Particle({
-                    position: { x: x, y: y },
-                    velocity: { x: (Math.random() - 0.5) * 15, y: (Math.random() - 0.5) * 15 },
-                    color: color
-                }));
-            }
-        }
-
-        function screenShake() {
-            const intensity = 8;
-            canvas.style.transform = `translate(${Math.random() * intensity - intensity / 2}px, ${Math.random() * intensity - intensity / 2}px)`;
-            setTimeout(() => { canvas.style.transform = 'translate(0,0)'; }, 50);
-        }
-
-        function rectangularCollision({ rectangle1, rectangle2 }) {
-            return (
-                rectangle1.attackBox.position.x + rectangle1.attackBox.width >= rectangle2.position.x &&
-                rectangle1.attackBox.position.x <= rectangle2.position.x + rectangle2.width &&
-                rectangle1.attackBox.position.y + rectangle1.attackBox.height >= rectangle2.position.y &&
-                rectangle1.attackBox.position.y <= rectangle2.position.y + rectangle2.height
-            )
-        }
-
-        function determineWinner({ player, enemy, timerId }) {
-            clearTimeout(timerId);
-            document.getElementById('winnerText').style.display = 'flex';
-            document.getElementById('gameOverScreen').classList.remove('hidden');
-            document.getElementById('hud').classList.add('hidden');
-            document.getElementById('mobile-controls').classList.add('hidden'); // Hide controls
-
-            if (player.health === enemy.health) {
-                document.getElementById('winnerText').innerText = 'DRAW';
-                document.getElementById('winnerText').style.color = 'white';
-            } else if (player.health > enemy.health) {
-                document.getElementById('winnerText').innerText = 'YOU WIN!';
-                document.getElementById('winnerText').style.color = 'var(--neon-blue)';
-            } else {
-                document.getElementById('winnerText').innerText = 'YOU LOSE...';
-                document.getElementById('winnerText').style.color = 'var(--accent)';
-            }
-            gameRunning = false;
-        }
-
-        function decreaseTimer() {
-            if (timer > 0) {
-                timerId = setTimeout(decreaseTimer, 1000);
-                timer--;
-                document.getElementById('timer').innerText = timer;
-            } else {
-                determineWinner({ player, enemy, timerId });
-            }
-        }
+        // --- 6. GAME LOOP & EVENTS ---
 
         function startGame() {
-            GROUND_Y = canvas.height - 100;
-            const pStr = parseInt(document.getElementById('strRange').value);
-            const pAgi = parseInt(document.getElementById('agiRange').value);
-            const pVit = parseInt(document.getElementById('vitRange').value);
-
-            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('craft-screen').classList.remove('active');
             document.getElementById('hud').classList.remove('hidden');
-            document.getElementById('mobile-controls').classList.remove('hidden'); // Show controls
+            document.getElementById('mobile-controls').classList.remove('hidden');
 
-            player = new Sprite({
-                position: { x: 100, y: 0 }, velocity: { x: 0, y: 0 }, offset: { x: 0, y: 0 }, color: '#2ed573'
-            });
-            player.maxHealth = pVit * 25; player.health = player.maxHealth;
-            player.speed = 2 + (pAgi * 1.5); player.damage = pStr * 5;
-            player.weaponType = selectedWeapon;
-            player.lastKey = 'd';
+            player = new Entity(100, 0, '#22d3ee', true);
+            enemy = new Entity(WIDTH - 150, 0, '#ef4444', false);
+            enemy.facing = -1;
 
-            if (selectedWeapon === 'axe') { player.damage *= 1.4; player.speed *= 0.85; player.attackBox.width = 80; }
-            if (selectedWeapon === 'spear') { player.damage *= 0.8; player.speed *= 1.1; player.attackBox.width = 180; }
-
-            enemy = new Sprite({
-                position: { x: canvas.width - 200, y: 0 }, velocity: { x: 0, y: 0 }, offset: { x: -50, y: 0 }, color: '#ff4757'
-            });
-            enemy.weaponType = ['sword', 'axe', 'spear'][Math.floor(Math.random() * 3)];
-            enemy.lastKey = 'a';
-
-            const eStr = Math.floor(Math.random() * 5) + 2;
-            const eVit = Math.floor(Math.random() * 5) + 2;
-            const eAgi = 10 - eStr - eVit;
-
-            enemy.maxHealth = Math.max(2, eVit) * 25; enemy.health = enemy.maxHealth;
-            enemy.damage = Math.max(2, eStr) * 5; enemy.speed = 2 + (Math.max(1, eAgi) * 1.5);
-
-            if (enemy.weaponType === 'axe') { enemy.damage *= 1.4; enemy.speed *= 0.85; enemy.attackBox.width = 80; }
-            if (enemy.weaponType === 'spear') { enemy.damage *= 0.8; enemy.speed *= 1.1; enemy.attackBox.width = 180; }
-
-            particles = [];
-            gameRunning = true;
-            timer = 60;
-            decreaseTimer();
-            animate();
+            state.running = true;
+            loop();
+            randomEventLoop();
         }
 
-        function animate() {
-            if (!gameRunning) return;
-            animationId = window.requestAnimationFrame(animate);
-            c.fillStyle = '#0f172a'; c.fillRect(0, 0, canvas.width, canvas.height);
-            c.fillStyle = '#1e293b'; c.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+        function loop() {
+            if (!state.running) return;
+            requestAnimationFrame(loop);
 
-            player.update(); enemy.update();
+            // Background / Clear
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-            player.velocity.x = 0;
-            if (keys.a.pressed && player.lastKey === 'a') player.velocity.x = -player.speed;
-            else if (keys.d.pressed && player.lastKey === 'd') player.velocity.x = player.speed;
+            // Screen Shake
+            if (shake > 0) {
+                ctx.save();
+                const dx = (Math.random() - 0.5) * shake;
+                const dy = (Math.random() - 0.5) * shake;
+                ctx.translate(dx, dy);
+                shake *= 0.9;
+                if (shake < 0.5) shake = 0;
+            }
 
-            // AI
-            const dist = player.position.x - enemy.position.x;
-            enemy.velocity.x = 0;
-            if (!enemy.dead && !player.dead) {
-                const attackRange = enemy.attackBox.width - 20;
-                if (Math.abs(dist) > attackRange) {
-                    if (dist > 0) { enemy.velocity.x = enemy.speed * 0.6; enemy.lastKey = 'd'; }
-                    else { enemy.velocity.x = -enemy.speed * 0.6; enemy.lastKey = 'a'; }
-                } else {
-                    if (dist > 0) enemy.lastKey = 'd'; else enemy.lastKey = 'a';
-                    if (Math.random() < 0.03) enemy.attack();
+            // Draw Ground (Biome)
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
+            ctx.fillStyle = '#334155'; // Platform Details
+            for (let i = 0; i < WIDTH; i += 50) ctx.fillRect(i, GROUND_Y, 40, 10);
+
+            // Updates
+            player.update();
+            enemy.update();
+            updateAI();
+            checkCollisions();
+
+            // Draw
+            player.draw();
+            enemy.draw();
+
+            // Projectiles
+            projectiles.forEach((p, i) => {
+                p.update();
+                // Hit check
+                let target = p.fromPlayer ? enemy : player;
+                if (Math.abs(p.x - (target.pos.x + 20)) < 30 && Math.abs(p.y - (target.pos.y + 40)) < 40) {
+                    target.takeDamage(p.dmg, Math.sign(p.vx));
+                    p.active = false;
+                    // Magic Boom
+                    createParticles(p.x, p.y, p.color, 10);
                 }
-                if (Math.random() < 0.005 && enemy.position.y + enemy.height >= GROUND_Y) enemy.velocity.y = -12;
-            }
-
-            // Collisions
-            if (rectangularCollision({ rectangle1: player, rectangle2: enemy }) && player.isAttacking && player.currentAttackFrame !== frameCount) {
-                player.isAttacking = false; enemy.takeHit(player.damage);
-                createParticles(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, '#ff4757');
-                screenShake(); document.getElementById('enemyHealth').style.width = (enemy.health / enemy.maxHealth) * 100 + '%';
-                if (enemy.health <= 0) determineWinner({ player, enemy, timerId });
-            }
-            if (rectangularCollision({ rectangle1: enemy, rectangle2: player }) && enemy.isAttacking) {
-                enemy.isAttacking = false; player.takeHit(enemy.damage);
-                createParticles(player.position.x + player.width / 2, player.position.y + player.height / 2, '#2ed573');
-                screenShake(); document.getElementById('playerHealth').style.width = (player.health / player.maxHealth) * 100 + '%';
-                if (player.health <= 0) determineWinner({ player, enemy, timerId });
-            }
-
-            particles.forEach((particle, index) => {
-                if (particle.alpha <= 0) particles.splice(index, 1); else particle.update();
+                if (!p.active) projectiles.splice(i, 1);
             });
+
+            // Particles
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.05;
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+                ctx.globalAlpha = 1;
+                if (p.life <= 0) particles.splice(i, 1);
+            });
+
+            if (shake > 0) ctx.restore();
+
+            // Update UI
+            updateHUD();
         }
 
-        let frameCount = 0;
-        setInterval(() => frameCount++, 1000 / 60);
+        function updateAI() {
+            if (enemy.hitStun > 0) return;
 
-        // --- Input Listeners (Keyboard) ---
-        window.addEventListener('keydown', (event) => {
-            if (!gameRunning) return;
-            switch (event.key.toLowerCase()) {
-                case 'd': keys.d.pressed = true; player.lastKey = 'd'; break;
-                case 'a': keys.a.pressed = true; player.lastKey = 'a'; break;
-                case 'w': if (player.position.y + player.height >= GROUND_Y) player.velocity.y = player.jumpPower; break;
-                case ' ': player.attack(); break;
+            const dx = player.pos.x - enemy.pos.x;
+            const dist = Math.abs(dx);
+
+            // Face player
+            enemy.facing = dx > 0 ? 1 : -1;
+
+            if (dist > 200 && Math.random() < 0.05 && enemy.stats.magic > 0) {
+                enemy.attack(); // Ranged AI
+            } else if (dist < 80) {
+                enemy.attack(); // Melee AI
+            } else {
+                enemy.vel.x = (dx > 0 ? 1 : -1) * 3; // Chase
             }
-        });
-        window.addEventListener('keyup', (event) => {
-            switch (event.key.toLowerCase()) {
-                case 'd': keys.d.pressed = false; break;
-                case 'a': keys.a.pressed = false; break;
+
+            // Jump random or if player is above
+            if (Math.random() < 0.01 || (player.pos.y < enemy.pos.y - 100 && Math.random() < 0.05)) {
+                if (enemy.jumps > 0) { enemy.vel.y = -12; enemy.jumps--; }
             }
-        });
-
-        // --- Input Listeners (Touch / Mobile) ---
-        function setupTouch(btnId, actionDown, actionUp) {
-            const btn = document.getElementById(btnId);
-            btn.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // Prevent scroll/zoom
-                btn.classList.add('active');
-                if (actionDown) actionDown();
-            }, { passive: false });
-
-            btn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                btn.classList.remove('active');
-                if (actionUp) actionUp();
-            }, { passive: false });
         }
 
-        setupTouch('btnLeft', () => { keys.a.pressed = true; player.lastKey = 'a'; }, () => { keys.a.pressed = false; });
-        setupTouch('btnRight', () => { keys.d.pressed = true; player.lastKey = 'd'; }, () => { keys.d.pressed = false; });
-        setupTouch('btnJump', () => { if (player.position.y + player.height >= GROUND_Y) player.velocity.y = player.jumpPower; }, null);
-        setupTouch('btnAtk', () => { player.attack(); }, null);
+        function checkCollisions() {
+            // Melee Hitbox approximation
+            if (player.isAttacking && Math.abs(player.pos.x - enemy.pos.x) < 80 && Math.abs(player.pos.y - enemy.pos.y) < 50) {
+                if (player.attackCooldown > 5) { // Active frames
+                    enemy.takeDamage(player.stats.dmg, player.facing);
+                    // Reset cooldown to prevent multi-hit in one swing unless rapid fire
+                    player.attackCooldown = 0;
+                }
+            }
+            if (enemy.isAttacking && Math.abs(enemy.pos.x - player.pos.x) < 80 && Math.abs(enemy.pos.y - player.pos.y) < 50) {
+                if (enemy.attackCooldown > 5) {
+                    player.takeDamage(enemy.stats.dmg, enemy.facing);
+                    enemy.attackCooldown = 0;
+                }
+            }
+        }
+
+        // --- 7. ADDICTIVE FEATURES ---
+
+        function updateHUD() {
+            document.getElementById('p1-hp').style.width = Math.max(0, player.hp) + '%';
+            document.getElementById('p2-hp').style.width = Math.max(0, enemy.hp) + '%';
+            document.getElementById('p1-percent').innerText = Math.floor(player.percent) + '%';
+            document.getElementById('p2-percent').innerText = Math.floor(enemy.percent) + '%';
+        }
+
+        function createParticles(x, y, color, count = 15) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    size: Math.random() * 5 + 2,
+                    color: color,
+                    life: 1.0
+                });
+            }
+        }
+
+        function screenShake(amount) {
+            shake = amount;
+        }
+
+        function showCombo(dmg, x, y) {
+            comboCount++;
+            clearTimeout(comboTimer);
+            comboTimer = setTimeout(() => comboCount = 0, 1000);
+
+            const el = document.createElement('div');
+            el.className = 'combo-text';
+            el.innerText = comboCount > 1 ? `${comboCount} HIT!` : `${dmg}`;
+            el.style.left = x + 'px';
+            el.style.top = (y - 50) + 'px';
+            el.style.color = comboCount > 3 ? 'var(--gold)' : '#fff';
+            document.body.appendChild(el);
+
+            // Animation
+            requestAnimationFrame(() => { el.style.opacity = 1; el.style.transform = 'translateY(-20px) scale(1.5)'; });
+            setTimeout(() => el.remove(), 800);
+        }
+
+        function randomEventLoop() {
+            if (!state.running) return;
+            const events = [
+                { text: "⚠ LOW GRAVITY ⚠", action: () => { player.vel.y -= 10; enemy.vel.y -= 10; } },
+                { text: "⚠ SUDDEN DEATH ⚠", action: () => { player.percent += 50; enemy.percent += 50; } },
+                { text: "⚠ SPEED UP ⚠", action: () => { player.vel.x *= 2; } }
+            ];
+
+            setTimeout(() => {
+                if (Math.random() < 0.3) {
+                    const ev = events[Math.floor(Math.random() * events.length)];
+                    const disp = document.getElementById('event-display');
+                    disp.innerHTML = `<div class="event-text">${ev.text}</div>`;
+                    ev.action();
+                    setTimeout(() => disp.innerHTML = '', 3000);
+                }
+                randomEventLoop();
+            }, 10000); // Check every 10s
+        }
+
+        function endGame(victory) {
+            state.running = false;
+            document.getElementById('result-screen').classList.add('active');
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('mobile-controls').classList.add('hidden');
+
+            const title = document.getElementById('result-text');
+            const loot = document.getElementById('loot-display');
+
+            if (victory) {
+                title.innerText = "VICTORY";
+                title.style.color = "var(--neon)";
+                loot.style.display = "block";
+                // Addictive Logic: Reward
+                loot.innerHTML = `LOOT:<br><span style="color:#fff;">Unlocked TNT Block!</span>`;
+            } else {
+                title.innerText = "DEFEAT";
+                title.style.color = "var(--accent)";
+                loot.style.display = "none";
+            }
+        }
+
+        // --- 8. INPUT HANDLING ---
+        const keys = {};
+        window.addEventListener('keydown', e => {
+            keys[e.key] = true;
+            if (e.key === 'a' || e.key === 'ArrowLeft') player.vel.x = -5;
+            if (e.key === 'd' || e.key === 'ArrowRight') player.vel.x = 5;
+            if ((e.key === 'w' || e.key === 'ArrowUp') && player.jumps > 0) {
+                player.vel.y = -12; player.jumps--; createParticles(player.pos.x + 20, player.pos.y + 80, '#fff', 5);
+            }
+            if (e.key === ' ' || e.key === 'z') player.attack();
+        });
+        window.addEventListener('keyup', e => keys[e.key] = false);
+
+        // Mobile Touch
+        const btnL = document.getElementById('btn-l');
+        const btnR = document.getElementById('btn-r');
+        const btnJ = document.getElementById('btn-j');
+        const btnA = document.getElementById('btn-a');
+
+        const addTouch = (elem, start, end) => {
+            elem.addEventListener('touchstart', (e) => { e.preventDefault(); start(); });
+            elem.addEventListener('touchend', (e) => { e.preventDefault(); if (end) end(); });
+        };
+
+        addTouch(btnL, () => {
+            const i = setInterval(() => { if (state.running) player.vel.x = -5; }, 16);
+            btnL.dataset.int = i;
+        }, () => clearInterval(btnL.dataset.int));
+
+        addTouch(btnR, () => {
+            const i = setInterval(() => { if (state.running) player.vel.x = 5; }, 16);
+            btnR.dataset.int = i;
+        }, () => clearInterval(btnR.dataset.int));
+
+        addTouch(btnJ, () => { if (player.jumps > 0) { player.vel.y = -12; player.jumps--; } });
+        addTouch(btnA, () => player.attack());
 
     </script>
 </body>

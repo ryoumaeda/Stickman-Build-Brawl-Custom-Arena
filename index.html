@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stick Forge: Arena | カスタム棒人間バトル</title>
+    <meta name="description" content="マインクラフトのような自由度と格闘ゲームの爽快感を融合。棒人間をカスタマイズして戦うWebブラウザゲーム。">
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Roboto+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --ui-bg: rgba(20, 20, 30, 0.9);
+            --accent: #ff4757;
+            --text: #ffffff;
+            --neon-blue: #2ed573;
+            --neon-yellow: #ffa502;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: var(--bg-color);
+            font-family: 'Roboto Mono', monospace;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* UI Container */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            /* Allows clicking through to canvas if needed */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Screens */
+        .screen {
+            pointer-events: auto;
+            background: var(--ui-bg);
+            padding: 40px;
+            border-radius: 12px;
+            border: 2px solid #333;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            max-width: 600px;
+            width: 90%;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-family: 'Black Ops One', cursive;
+            font-size: 3rem;
+            margin: 0 0 10px 0;
+            color: var(--accent);
+            text-transform: uppercase;
+            text-shadow: 2px 2px 0px #fff;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Customization Controls */
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            font-size: 1.2rem;
+        }
+
+        .stat-value {
+            color: var(--neon-blue);
+            font-weight: bold;
+            width: 40px;
+        }
+
+        input[type="range"] {
+            width: 60%;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        .weapon-select {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .weapon-btn {
+            background: #333;
+            border: 2px solid #555;
+            color: #fff;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.2s;
+        }
+
+        .weapon-btn.selected {
+            border-color: var(--neon-yellow);
+            background: #444;
+            box-shadow: 0 0 15px rgba(255, 165, 2, 0.4);
+        }
+
+        .action-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-family: 'Black Ops One', cursive;
+            cursor: pointer;
+            margin-top: 20px;
+            transform: skew(-10deg);
+            transition: 0.2s;
+        }
+
+        .action-btn:hover {
+            transform: skew(-10deg) scale(1.05);
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        /* HUD (In Game) */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .health-bar-container {
+            width: 40%;
+            height: 30px;
+            background: #333;
+            border: 2px solid #fff;
+            position: relative;
+            transform: skew(-20deg);
+        }
+
+        .health-bar {
+            height: 100%;
+            background: var(--neon-blue);
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+
+        .enemy-bar {
+            background: var(--accent);
+            justify-self: flex-end;
+        }
+
+        #timer {
+            font-family: 'Black Ops One', cursive;
+            font-size: 3rem;
+            color: white;
+            text-shadow: 0 0 10px black;
+        }
+
+        canvas {
+            background: #1a1a1a;
+            /* Backup bg */
+        }
+
+        .controls-hint {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #888;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-layer">
+
+        <div id="hud" class="hidden">
+            <div class="health-bar-container">
+                <div id="playerHealth" class="health-bar"></div>
+            </div>
+            <div id="timer">60</div>
+            <div class="health-bar-container" style="border-color: #ff4757;">
+                <div id="enemyHealth" class="health-bar enemy-bar"></div>
+            </div>
+        </div>
+
+        <div id="startScreen" class="screen">
+            <h1>Stick Forge</h1>
+            <p>BUILD YOUR FIGHTER</p>
+
+            <div style="margin-bottom: 20px; color: #aaa;">Points Remaining: <span id="pointsRemain"
+                    style="color:white; font-weight:bold;">0</span></div>
+
+            <div class="stat-row">
+                <label>STR (Power)</label>
+                <input type="range" id="strRange" min="1" max="10" value="5" oninput="updatePoints()">
+                <span id="strVal" class="stat-value">5</span>
+            </div>
+            <div class="stat-row">
+                <label>AGI (Speed)</label>
+                <input type="range" id="agiRange" min="1" max="10" value="5" oninput="updatePoints()">
+                <span id="agiVal" class="stat-value">5</span>
+            </div>
+            <div class="stat-row">
+                <label>VIT (Health)</label>
+                <input type="range" id="vitRange" min="1" max="10" value="5" oninput="updatePoints()">
+                <span id="vitVal" class="stat-value">5</span>
+            </div>
+
+            <p style="margin-top: 20px;">CHOOSE WEAPON</p>
+            <div class="weapon-select">
+                <button class="weapon-btn selected" onclick="selectWeapon('sword', this)">SWORD</button>
+                <button class="weapon-btn" onclick="selectWeapon('axe', this)">AXE</button>
+                <button class="weapon-btn" onclick="selectWeapon('spear', this)">SPEAR</button>
+            </div>
+
+            <button class="action-btn" onclick="startGame()">FIGHT!</button>
+
+            <div class="controls-hint">
+                Controls:<br>
+                [A][D] Move | [W] Jump<br>
+                [SPACE] Attack
+            </div>
+        </div>
+
+        <div id="gameOverScreen" class="screen hidden">
+            <h1 id="winnerText">YOU WIN</h1>
+            <button class="action-btn" onclick="location.reload()">RE-FORGE</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Game Constants & Setup ---
+        const canvas = document.getElementById('gameCanvas');
+        const c = canvas.getContext('2d');
+
+        canvas.width = 1024;
+        canvas.height = 576;
+
+        // Resize handling
+        function resize() {
+            const aspect = 16 / 9;
+            let w = window.innerWidth;
+            let h = window.innerHeight;
+            if (w / h > aspect) w = h * aspect;
+            else h = w / aspect;
+
+            canvas.style.width = `${w}px`;
+            canvas.style.height = `${h}px`;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const GRAVITY = 0.7;
+        const GROUND_Y = canvas.height - 96;
+
+        // Input State
+        const keys = {
+            a: { pressed: false },
+            d: { pressed: false },
+            w: { pressed: false },
+            space: { pressed: false }
+        };
+
+        let animationId;
+        let timer = 60;
+        let timerId;
+        let gameRunning = false;
+
+        // --- 2. Classes ---
+
+        class Sprite {
+            constructor({ position, velocity, color = 'red', offset = { x: 0, y: 0 } }) {
+                this.position = position;
+                this.velocity = velocity;
+                this.width = 50;
+                this.height = 150;
+                this.lastKey;
+                this.attackBox = {
+                    position: { x: this.position.x, y: this.position.y },
+                    offset: offset,
+                    width: 100,
+                    height: 50
+                };
+                this.color = color;
+                this.isAttacking;
+                this.health = 100;
+                this.maxHealth = 100;
+
+                // Stats
+                this.damage = 10;
+                this.speed = 5;
+                this.jumpPower = -15;
+                this.weaponType = 'sword';
+
+                this.dead = false;
+            }
+
+            draw() {
+                // Draw Body (Stickman style)
+                c.strokeStyle = this.color;
+                c.lineWidth = 4;
+                c.fillStyle = this.color;
+
+                // Head
+                c.beginPath();
+                c.arc(this.position.x + this.width / 2, this.position.y, 20, 0, Math.PI * 2);
+                c.stroke();
+                // Body
+                c.beginPath();
+                c.moveTo(this.position.x + this.width / 2, this.position.y + 20);
+                c.lineTo(this.position.x + this.width / 2, this.position.y + 80);
+                c.stroke();
+                // Legs
+                c.beginPath();
+                c.moveTo(this.position.x + this.width / 2, this.position.y + 80);
+                c.lineTo(this.position.x, this.position.y + this.height);
+                c.moveTo(this.position.x + this.width / 2, this.position.y + 80);
+                c.lineTo(this.position.x + this.width, this.position.y + this.height);
+                c.stroke();
+                // Arms (Dynamic based on attack)
+                let armOffset = this.isAttacking ? 40 : 0;
+                c.beginPath();
+                c.moveTo(this.position.x + this.width / 2, this.position.y + 40);
+                // Simple arm animation logic
+                if (this.isAttacking) {
+                    // Attack pose
+                    c.lineTo(this.position.x + (this.attackBox.offset.x > 0 ? 80 : -30), this.position.y + 50);
+                } else {
+                    // Idle
+                    c.lineTo(this.position.x + (this.attackBox.offset.x > 0 ? 60 : -10), this.position.y + 60);
+                }
+                c.stroke();
+
+                // Draw Weapon (Minecraft style blocks)
+                this.drawWeapon();
+
+                // Draw Attack Box (Debug only - toggle if needed)
+                // if (this.isAttacking) {
+                //     c.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                //     c.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height);
+                // }
+            }
+
+            drawWeapon() {
+                const facingRight = this.attackBox.offset.x > 0;
+                let wx = this.position.x + this.width / 2 + (facingRight ? 30 : -30);
+                let wy = this.position.y + 50;
+
+                c.fillStyle = '#ddd'; // Iron color
+
+                if (this.weaponType === 'sword') {
+                    // Blade
+                    c.fillRect(wx + (facingRight ? 0 : -40), wy - 30, 40, 10);
+                    c.fillRect(wx + (facingRight ? 10 : -30), wy - 40, 20, 10);
+                } else if (this.weaponType === 'axe') {
+                    // Handle
+                    c.fillStyle = '#8B4513';
+                    c.fillRect(wx + (facingRight ? 0 : -10), wy - 40, 10, 60);
+                    // Head
+                    c.fillStyle = '#ddd';
+                    c.fillRect(wx + (facingRight ? 5 : -25), wy - 40, 20, 30);
+                } else if (this.weaponType === 'spear') {
+                    // Shaft
+                    c.fillStyle = '#8B4513';
+                    c.fillRect(wx + (facingRight ? -20 : -60), wy, 80, 5);
+                    // Tip
+                    c.fillStyle = '#ddd';
+                    c.fillRect(wx + (facingRight ? 60 : -70), wy - 2, 15, 9);
+                }
+            }
+
+            update() {
+                this.draw();
+                if (!this.dead) {
+                    this.position.x += this.velocity.x;
+                    this.position.y += this.velocity.y;
+                }
+
+                // Gravity
+                if (this.position.y + this.height + this.velocity.y >= GROUND_Y) {
+                    this.velocity.y = 0;
+                    this.position.y = GROUND_Y - this.height;
+                } else {
+                    this.velocity.y += GRAVITY;
+                }
+
+                // Attack Box Sync
+                this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
+                this.attackBox.position.y = this.position.y + this.attackBox.offset.y;
+
+                // Boundary check
+                if (this.position.x < 0) this.position.x = 0;
+                if (this.position.x + this.width > canvas.width) this.position.x = canvas.width - this.width;
+            }
+
+            attack() {
+                if (this.isAttacking) return; // Cooldown
+                this.isAttacking = true;
+                setTimeout(() => {
+                    this.isAttacking = false;
+                }, 100 * (10 / this.speed)); // Speed affects attack duration
+            }
+
+            takeHit(amt) {
+                this.health -= amt;
+                if (this.health <= 0) {
+                    this.health = 0;
+                    this.dead = true;
+                }
+            }
+        }
+
+        class Particle {
+            constructor({ position, velocity, color }) {
+                this.position = position;
+                this.velocity = velocity;
+                this.radius = Math.random() * 5 + 2; // Square size
+                this.color = color;
+                this.alpha = 1;
+            }
+
+            draw() {
+                c.save();
+                c.globalAlpha = this.alpha;
+                c.fillStyle = this.color;
+                // Minecraft style: Square particles
+                c.fillRect(this.position.x, this.position.y, this.radius, this.radius);
+                c.restore();
+            }
+
+            update() {
+                this.draw();
+                this.velocity.x *= 0.98; // Friction
+                this.velocity.y += 0.2; // Gravity
+                this.position.x += this.velocity.x;
+                this.position.y += this.velocity.y;
+                this.alpha -= 0.03;
+            }
+        }
+
+        // --- 3. Global Variables ---
+        let player, enemy;
+        let particles = [];
+        let selectedWeapon = 'sword';
+        const TOTAL_POINTS = 15;
+
+        // --- 4. Logic Functions ---
+
+        function updatePoints() {
+            const str = parseInt(document.getElementById('strRange').value);
+            const agi = parseInt(document.getElementById('agiRange').value);
+            const vit = parseInt(document.getElementById('vitRange').value);
+
+            // Simple logic: Allow free adjustment, display values
+            document.getElementById('strVal').innerText = str;
+            document.getElementById('agiVal').innerText = agi;
+            document.getElementById('vitVal').innerText = vit;
+
+            // Note: In a stricter game, you'd clamp these to a total
+        }
+
+        function selectWeapon(type, btn) {
+            selectedWeapon = type;
+            document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
+        function createParticles(x, y, color, amount = 8) {
+            for (let i = 0; i < amount; i++) {
+                particles.push(new Particle({
+                    position: { x: x, y: y },
+                    velocity: {
+                        x: (Math.random() - 0.5) * 10,
+                        y: (Math.random() - 0.5) * 10
+                    },
+                    color: color
+                }));
+            }
+        }
+
+        function screenShake() {
+            canvas.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
+            setTimeout(() => {
+                canvas.style.transform = 'translate(0,0)';
+            }, 50);
+        }
+
+        function rectangularCollision({ rectangle1, rectangle2 }) {
+            return (
+                rectangle1.attackBox.position.x + rectangle1.attackBox.width >= rectangle2.position.x &&
+                rectangle1.attackBox.position.x <= rectangle2.position.x + rectangle2.width &&
+                rectangle1.attackBox.position.y + rectangle1.attackBox.height >= rectangle2.position.y &&
+                rectangle1.attackBox.position.y <= rectangle2.position.y + rectangle2.height
+            )
+        }
+
+        function determineWinner({ player, enemy, timerId }) {
+            clearTimeout(timerId);
+            document.getElementById('winnerText').style.display = 'flex';
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('hud').classList.add('hidden');
+
+            if (player.health === enemy.health) {
+                document.getElementById('winnerText').innerText = 'DRAW';
+            } else if (player.health > enemy.health) {
+                document.getElementById('winnerText').innerText = 'YOU WIN';
+                document.getElementById('winnerText').style.color = 'var(--neon-blue)';
+            } else {
+                document.getElementById('winnerText').innerText = 'YOU LOSE';
+                document.getElementById('winnerText').style.color = 'var(--accent)';
+            }
+            gameRunning = false;
+        }
+
+        function decreaseTimer() {
+            if (timer > 0) {
+                timerId = setTimeout(decreaseTimer, 1000);
+                timer--;
+                document.getElementById('timer').innerText = timer;
+            } else {
+                determineWinner({ player, enemy, timerId });
+            }
+        }
+
+        function startGame() {
+            // Get stats
+            const pStr = parseInt(document.getElementById('strRange').value);
+            const pAgi = parseInt(document.getElementById('agiRange').value);
+            const pVit = parseInt(document.getElementById('vitRange').value);
+
+            // Hide UI, Show HUD
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+
+            // --- Initialize Player ---
+            player = new Sprite({
+                position: { x: 100, y: 0 },
+                velocity: { x: 0, y: 0 },
+                offset: { x: 0, y: 0 },
+                color: '#2ed573'
+            });
+            // Apply Stats
+            player.maxHealth = pVit * 20; // Base 100 at 5
+            player.health = player.maxHealth;
+            player.speed = pAgi * 1.5;
+            player.damage = pStr * 3;
+            player.weaponType = selectedWeapon;
+
+            // Weapon specific tweaks
+            if (selectedWeapon === 'axe') {
+                player.damage *= 1.5;
+                player.speed *= 0.8;
+                player.attackBox.width = 80;
+            }
+            if (selectedWeapon === 'spear') {
+                player.damage *= 0.7;
+                player.speed *= 1.2;
+                player.attackBox.width = 160;
+            }
+
+            // --- Initialize Enemy (Random Stats) ---
+            enemy = new Sprite({
+                position: { x: canvas.width - 150, y: 0 },
+                velocity: { x: 0, y: 0 },
+                offset: { x: -50, y: 0 },
+                color: '#ff4757'
+            });
+            enemy.weaponType = ['sword', 'axe', 'spear'][Math.floor(Math.random() * 3)];
+            enemy.maxHealth = 100 + (Math.random() * 50);
+            enemy.health = enemy.maxHealth;
+            enemy.damage = 15;
+            enemy.speed = 6;
+
+            // Reset Game State
+            particles = [];
+            gameRunning = true;
+            timer = 60;
+            decreaseTimer();
+
+            animate();
+        }
+
+        // --- 5. Game Loop ---
+
+        function animate() {
+            if (!gameRunning) return;
+            animationId = window.requestAnimationFrame(animate);
+
+            // Draw Background (Grid style for "Forge" feel)
+            c.fillStyle = '#1e1e2e';
+            c.fillRect(0, 0, canvas.width, canvas.height);
+            // Floor
+            c.fillStyle = '#111';
+            c.fillRect(0, GROUND_Y, canvas.width, 96);
+
+            // Update Players
+            player.update();
+            enemy.update();
+
+            // --- Player Movement ---
+            player.velocity.x = 0;
+
+            // Simple attack direction logic
+            if (keys.a.pressed && player.lastKey === 'a') {
+                player.velocity.x = -player.speed;
+                player.attackBox.offset.x = -player.attackBox.width; // Face left
+            } else if (keys.d.pressed && player.lastKey === 'd') {
+                player.velocity.x = player.speed;
+                player.attackBox.offset.x = 0; // Face right
+            }
+
+            // --- Simple AI Logic ---
+            const dist = player.position.x - enemy.position.x;
+            enemy.velocity.x = 0;
+
+            if (!enemy.dead) {
+                // Face player
+                if (dist > 0) enemy.attackBox.offset.x = 0;
+                else enemy.attackBox.offset.x = -enemy.attackBox.width;
+
+                // Move logic
+                if (Math.abs(dist) > enemy.attackBox.width - 20) {
+                    // Chase
+                    if (dist > 0) enemy.velocity.x = enemy.speed * 0.5;
+                    else enemy.velocity.x = -enemy.speed * 0.5;
+                } else {
+                    // Attack range
+                    if (Math.random() < 0.02) { // Random chance to attack
+                        enemy.attack();
+                    }
+                }
+                // Random jump
+                if (Math.random() < 0.005 && enemy.position.y + enemy.height >= GROUND_Y) {
+                    enemy.velocity.y = -15;
+                }
+            }
+
+            // --- Collision Detection (Attacks) ---
+
+            // Player Hit
+            if (rectangularCollision({ rectangle1: player, rectangle2: enemy }) &&
+                player.isAttacking && player.currentAttackFrame !== frameCount) { // Hacky debounce
+
+                player.isAttacking = false; // Consume attack
+                enemy.takeHit(player.damage);
+
+                // Visuals
+                createParticles(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, '#ff4757', 12);
+                screenShake();
+
+                // Update Health Bar
+                document.getElementById('enemyHealth').style.width = (enemy.health / enemy.maxHealth) * 100 + '%';
+
+                if (enemy.health <= 0) determineWinner({ player, enemy, timerId });
+            }
+
+            // Enemy Hit
+            if (rectangularCollision({ rectangle1: enemy, rectangle2: player }) &&
+                enemy.isAttacking) {
+
+                enemy.isAttacking = false;
+                player.takeHit(enemy.damage);
+
+                createParticles(player.position.x + player.width / 2, player.position.y + player.height / 2, '#2ed573', 12);
+                screenShake();
+
+                document.getElementById('playerHealth').style.width = (player.health / player.maxHealth) * 100 + '%';
+
+                if (player.health <= 0) determineWinner({ player, enemy, timerId });
+            }
+
+            // --- Particles ---
+            particles.forEach((particle, index) => {
+                if (particle.alpha <= 0) {
+                    particles.splice(index, 1);
+                } else {
+                    particle.update();
+                }
+            });
+        }
+
+        // Helper to avoid multi-hit on one frame
+        let frameCount = 0;
+        setInterval(() => frameCount++, 1000 / 60);
+
+        // --- 6. Event Listeners ---
+
+        window.addEventListener('keydown', (event) => {
+            if (!gameRunning) return;
+            switch (event.key.toLowerCase()) {
+                case 'd':
+                    keys.d.pressed = true;
+                    player.lastKey = 'd';
+                    break;
+                case 'a':
+                    keys.a.pressed = true;
+                    player.lastKey = 'a';
+                    break;
+                case 'w':
+                    if (player.position.y + player.height >= GROUND_Y) {
+                        player.velocity.y = player.jumpPower;
+                    }
+                    break;
+                case ' ':
+                    player.attack();
+                    break;
+            }
+        });
+
+        window.addEventListener('keyup', (event) => {
+            switch (event.key.toLowerCase()) {
+                case 'd':
+                    keys.d.pressed = false;
+                    break;
+                case 'a':
+                    keys.a.pressed = false;
+                    break;
+            }
+        });
+
+    </script>
+</body>
+
+</html>

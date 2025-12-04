@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stick Forge: Arena | カスタム棒人間バトル</title>
-    <meta name="description" content="マインクラフトのような自由度と格闘ゲームの爽快感を融合。棒人間をカスタマイズして戦うWebブラウザゲーム。">
+    <title>カスタム棒人間バトル：ビルド＆ファイト【Web格ゲー】</title>
+    <meta name="description" content="合計10ポイントのステータス割り振りで最強の棒人間を作れ。Webブラウザで遊べるカスタム格闘ゲーム。">
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Roboto+Mono:wght@400;700&display=swap"
         rel="stylesheet">
     <style>
         :root {
             --bg-color: #121212;
-            --ui-bg: rgba(20, 20, 30, 0.9);
+            --ui-bg: rgba(20, 20, 30, 0.95);
             --accent: #ff4757;
             --text: #ffffff;
             --neon-blue: #2ed573;
@@ -38,7 +38,6 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            /* Allows clicking through to canvas if needed */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -61,11 +60,12 @@
 
         h1 {
             font-family: 'Black Ops One', cursive;
-            font-size: 3rem;
+            font-size: 2.5rem;
             margin: 0 0 10px 0;
             color: var(--accent);
             text-transform: uppercase;
             text-shadow: 2px 2px 0px #fff;
+            line-height: 1.2;
         }
 
         .hidden {
@@ -73,22 +73,32 @@
         }
 
         /* Customization Controls */
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
         .stat-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin: 15px 0;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
 
         .stat-value {
             color: var(--neon-blue);
             font-weight: bold;
             width: 40px;
+            text-align: right;
         }
 
         input[type="range"] {
-            width: 60%;
+            width: 55%;
             cursor: pointer;
             accent-color: var(--accent);
         }
@@ -97,23 +107,25 @@
             display: flex;
             justify-content: center;
             gap: 15px;
-            margin: 20px 0;
+            margin: 25px 0;
         }
 
         .weapon-btn {
             background: #333;
             border: 2px solid #555;
             color: #fff;
-            padding: 10px 20px;
+            padding: 10px 15px;
             cursor: pointer;
             font-family: inherit;
             transition: 0.2s;
+            font-size: 0.9rem;
         }
 
         .weapon-btn.selected {
             border-color: var(--neon-yellow);
             background: #444;
             box-shadow: 0 0 15px rgba(255, 165, 2, 0.4);
+            transform: scale(1.05);
         }
 
         .action-btn {
@@ -127,11 +139,17 @@
             margin-top: 20px;
             transform: skew(-10deg);
             transition: 0.2s;
+            box-shadow: 0 4px 0 #b33939;
         }
 
         .action-btn:hover {
-            transform: skew(-10deg) scale(1.05);
-            box-shadow: 0 0 20px var(--accent);
+            transform: skew(-10deg) translateY(-2px);
+            box-shadow: 0 6px 0 #b33939;
+        }
+
+        .action-btn:active {
+            transform: skew(-10deg) translateY(2px);
+            box-shadow: 0 2px 0 #b33939;
         }
 
         /* HUD (In Game) */
@@ -159,12 +177,12 @@
             height: 100%;
             background: var(--neon-blue);
             width: 100%;
-            transition: width 0.1s linear;
+            transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .enemy-bar {
             background: var(--accent);
-            justify-self: flex-end;
+            float: right;
         }
 
         #timer {
@@ -174,16 +192,14 @@
             text-shadow: 0 0 10px black;
         }
 
-        canvas {
-            background: #1a1a1a;
-            /* Backup bg */
-        }
-
         .controls-hint {
             margin-top: 20px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #888;
             text-align: left;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 6px;
         }
     </style>
 </head>
@@ -206,46 +222,51 @@
 
         <div id="startScreen" class="screen">
             <h1>Stick Forge</h1>
-            <p>BUILD YOUR FIGHTER</p>
+            <p style="letter-spacing: 2px; margin-bottom: 20px;">BUILD YOUR FIGHTER</p>
 
-            <div style="margin-bottom: 20px; color: #aaa;">Points Remaining: <span id="pointsRemain"
-                    style="color:white; font-weight:bold;">0</span></div>
-
-            <div class="stat-row">
-                <label>STR (Power)</label>
-                <input type="range" id="strRange" min="1" max="10" value="5" oninput="updatePoints()">
-                <span id="strVal" class="stat-value">5</span>
-            </div>
-            <div class="stat-row">
-                <label>AGI (Speed)</label>
-                <input type="range" id="agiRange" min="1" max="10" value="5" oninput="updatePoints()">
-                <span id="agiVal" class="stat-value">5</span>
-            </div>
-            <div class="stat-row">
-                <label>VIT (Health)</label>
-                <input type="range" id="vitRange" min="1" max="10" value="5" oninput="updatePoints()">
-                <span id="vitVal" class="stat-value">5</span>
+            <div class="stat-header">
+                <span>TOTAL POINTS</span>
+                <span id="pointsDisplay" style="color:var(--neon-yellow);">7 / 10</span>
             </div>
 
-            <p style="margin-top: 20px;">CHOOSE WEAPON</p>
+            <div class="stat-row">
+                <label>STR (攻撃)</label>
+                <input type="range" id="strRange" min="1" max="8" value="1" oninput="updatePoints('strRange')">
+                <span id="strVal" class="stat-value">1</span>
+            </div>
+            <div class="stat-row">
+                <label>AGI (速度)</label>
+                <input type="range" id="agiRange" min="1" max="8" value="1" oninput="updatePoints('agiRange')">
+                <span id="agiVal" class="stat-value">1</span>
+            </div>
+            <div class="stat-row">
+                <label>VIT (体力)</label>
+                <input type="range" id="vitRange" min="1" max="8" value="1" oninput="updatePoints('vitRange')">
+                <span id="vitVal" class="stat-value">1</span>
+            </div>
+
+            <p style="margin-top: 25px; font-size: 0.9rem; color: #aaa;">SELECT WEAPON</p>
             <div class="weapon-select">
-                <button class="weapon-btn selected" onclick="selectWeapon('sword', this)">SWORD</button>
-                <button class="weapon-btn" onclick="selectWeapon('axe', this)">AXE</button>
-                <button class="weapon-btn" onclick="selectWeapon('spear', this)">SPEAR</button>
+                <button class="weapon-btn selected" onclick="selectWeapon('sword', this)">SWORD<br><span
+                        style="font-size:0.7em">バランス</span></button>
+                <button class="weapon-btn" onclick="selectWeapon('axe', this)">AXE<br><span
+                        style="font-size:0.7em">高威力・遅</span></button>
+                <button class="weapon-btn" onclick="selectWeapon('spear', this)">SPEAR<br><span
+                        style="font-size:0.7em">リーチ・速</span></button>
             </div>
 
-            <button class="action-btn" onclick="startGame()">FIGHT!</button>
+            <button class="action-btn" onclick="startGame()">BATTLE START</button>
 
             <div class="controls-hint">
-                Controls:<br>
-                [A][D] Move | [W] Jump<br>
-                [SPACE] Attack
+                <strong>操作方法:</strong><br>
+                [A][D] 移動 | [W] ジャンプ | [SPACE] 攻撃<br>
+                ※ポイントは合計10まで割り振れます。
             </div>
         </div>
 
         <div id="gameOverScreen" class="screen hidden">
             <h1 id="winnerText">YOU WIN</h1>
-            <button class="action-btn" onclick="location.reload()">RE-FORGE</button>
+            <button class="action-btn" onclick="location.reload()">RE-FORGE (再戦)</button>
         </div>
     </div>
 
@@ -254,25 +275,19 @@
         const canvas = document.getElementById('gameCanvas');
         const c = canvas.getContext('2d');
 
-        canvas.width = 1024;
-        canvas.height = 576;
-
-        // Resize handling
+        // Dynamic Resize
         function resize() {
-            const aspect = 16 / 9;
-            let w = window.innerWidth;
-            let h = window.innerHeight;
-            if (w / h > aspect) w = h * aspect;
-            else h = w / aspect;
-
-            canvas.style.width = `${w}px`;
-            canvas.style.height = `${h}px`;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
         window.addEventListener('resize', resize);
         resize();
 
         const GRAVITY = 0.7;
-        const GROUND_Y = canvas.height - 96;
+        let GROUND_Y = canvas.height - 100;
+
+        // Stats Limit
+        const MAX_TOTAL_POINTS = 10;
 
         // Input State
         const keys = {
@@ -287,7 +302,63 @@
         let timerId;
         let gameRunning = false;
 
-        // --- 2. Classes ---
+        // --- 2. Logic Functions (Stats & Build) ---
+
+        function updatePoints(changedId) {
+            const strInput = document.getElementById('strRange');
+            const agiInput = document.getElementById('agiRange');
+            const vitInput = document.getElementById('vitRange');
+
+            let str = parseInt(strInput.value);
+            let agi = parseInt(agiInput.value);
+            let vit = parseInt(vitInput.value);
+
+            let currentTotal = str + agi + vit;
+
+            // ポイント上限チェック
+            if (currentTotal > MAX_TOTAL_POINTS) {
+                const excess = currentTotal - MAX_TOTAL_POINTS;
+
+                // 操作したスライダーの値を戻す
+                if (changedId === 'strRange') {
+                    str -= excess;
+                    strInput.value = str;
+                } else if (changedId === 'agiRange') {
+                    agi -= excess;
+                    agiInput.value = agi;
+                } else if (changedId === 'vitRange') {
+                    vit -= excess;
+                    vitInput.value = vit;
+                }
+                currentTotal = MAX_TOTAL_POINTS;
+            }
+
+            // UI更新
+            document.getElementById('strVal').innerText = str;
+            document.getElementById('agiVal').innerText = agi;
+            document.getElementById('vitVal').innerText = vit;
+
+            const remaining = MAX_TOTAL_POINTS - currentTotal;
+            document.getElementById('pointsDisplay').innerText = `${currentTotal} / ${MAX_TOTAL_POINTS}`;
+
+            if (remaining === 0) {
+                document.getElementById('pointsDisplay').style.color = 'var(--neon-blue)';
+            } else {
+                document.getElementById('pointsDisplay').style.color = 'var(--neon-yellow)';
+            }
+        }
+
+        // 初期化実行
+        updatePoints();
+
+        let selectedWeapon = 'sword';
+        function selectWeapon(type, btn) {
+            selectedWeapon = type;
+            document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
+        // --- 3. Classes ---
 
         class Sprite {
             constructor({ position, velocity, color = 'red', offset = { x: 0, y: 0 } }) {
@@ -317,76 +388,80 @@
             }
 
             draw() {
-                // Draw Body (Stickman style)
                 c.strokeStyle = this.color;
                 c.lineWidth = 4;
                 c.fillStyle = this.color;
 
+                // Simple Stickman Draw
+                const x = this.position.x;
+                const y = this.position.y;
+                const w = this.width;
+                const h = this.height;
+
                 // Head
                 c.beginPath();
-                c.arc(this.position.x + this.width / 2, this.position.y, 20, 0, Math.PI * 2);
+                c.arc(x + w / 2, y, 20, 0, Math.PI * 2);
                 c.stroke();
                 // Body
                 c.beginPath();
-                c.moveTo(this.position.x + this.width / 2, this.position.y + 20);
-                c.lineTo(this.position.x + this.width / 2, this.position.y + 80);
+                c.moveTo(x + w / 2, y + 20);
+                c.lineTo(x + w / 2, y + 80);
                 c.stroke();
                 // Legs
                 c.beginPath();
-                c.moveTo(this.position.x + this.width / 2, this.position.y + 80);
-                c.lineTo(this.position.x, this.position.y + this.height);
-                c.moveTo(this.position.x + this.width / 2, this.position.y + 80);
-                c.lineTo(this.position.x + this.width, this.position.y + this.height);
+                c.moveTo(x + w / 2, y + 80);
+                c.lineTo(x, y + h);
+                c.moveTo(x + w / 2, y + 80);
+                c.lineTo(x + w, y + h);
                 c.stroke();
-                // Arms (Dynamic based on attack)
-                let armOffset = this.isAttacking ? 40 : 0;
+
+                // Arms & Weapon Logic
+                const facingRight = this.attackBox.offset.x >= 0;
+                const armOriginX = x + w / 2;
+                const armOriginY = y + 40;
+
                 c.beginPath();
-                c.moveTo(this.position.x + this.width / 2, this.position.y + 40);
-                // Simple arm animation logic
+                c.moveTo(armOriginX, armOriginY);
+
+                let handX, handY;
                 if (this.isAttacking) {
-                    // Attack pose
-                    c.lineTo(this.position.x + (this.attackBox.offset.x > 0 ? 80 : -30), this.position.y + 50);
+                    handX = armOriginX + (facingRight ? 60 : -60);
+                    handY = armOriginY + 10;
                 } else {
-                    // Idle
-                    c.lineTo(this.position.x + (this.attackBox.offset.x > 0 ? 60 : -10), this.position.y + 60);
+                    handX = armOriginX + (facingRight ? 30 : -30);
+                    handY = armOriginY + 40;
                 }
+                c.lineTo(handX, handY);
                 c.stroke();
 
-                // Draw Weapon (Minecraft style blocks)
-                this.drawWeapon();
-
-                // Draw Attack Box (Debug only - toggle if needed)
-                // if (this.isAttacking) {
-                //     c.fillStyle = 'rgba(255, 0, 0, 0.3)';
-                //     c.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height);
-                // }
+                this.drawWeapon(handX, handY, facingRight);
             }
 
-            drawWeapon() {
-                const facingRight = this.attackBox.offset.x > 0;
-                let wx = this.position.x + this.width / 2 + (facingRight ? 30 : -30);
-                let wy = this.position.y + 50;
-
-                c.fillStyle = '#ddd'; // Iron color
+            drawWeapon(handX, handY, facingRight) {
+                c.fillStyle = '#cbd5e1'; // Metal color
+                const dir = facingRight ? 1 : -1;
 
                 if (this.weaponType === 'sword') {
                     // Blade
-                    c.fillRect(wx + (facingRight ? 0 : -40), wy - 30, 40, 10);
-                    c.fillRect(wx + (facingRight ? 10 : -30), wy - 40, 20, 10);
+                    c.fillRect(handX, handY - 30, 40 * dir, 6);
+                    // Hilt
+                    c.fillStyle = '#475569';
+                    c.fillRect(handX, handY - 5, 10 * dir, 10);
                 } else if (this.weaponType === 'axe') {
                     // Handle
                     c.fillStyle = '#8B4513';
-                    c.fillRect(wx + (facingRight ? 0 : -10), wy - 40, 10, 60);
+                    c.fillRect(handX, handY - 40, 6 * dir, 60);
                     // Head
-                    c.fillStyle = '#ddd';
-                    c.fillRect(wx + (facingRight ? 5 : -25), wy - 40, 20, 30);
+                    c.fillStyle = '#94a3b8';
+                    const headX = handX + (5 * dir);
+                    c.fillRect(headX, handY - 40, 25 * dir, 20);
                 } else if (this.weaponType === 'spear') {
                     // Shaft
                     c.fillStyle = '#8B4513';
-                    c.fillRect(wx + (facingRight ? -20 : -60), wy, 80, 5);
+                    c.fillRect(handX - (20 * dir), handY, 100 * dir, 4);
                     // Tip
-                    c.fillStyle = '#ddd';
-                    c.fillRect(wx + (facingRight ? 60 : -70), wy - 2, 15, 9);
+                    c.fillStyle = '#cbd5e1';
+                    c.fillRect(handX + (80 * dir), handY - 1, 15 * dir, 6);
                 }
             }
 
@@ -397,7 +472,7 @@
                     this.position.y += this.velocity.y;
                 }
 
-                // Gravity
+                // Gravity & Floor Collision
                 if (this.position.y + this.height + this.velocity.y >= GROUND_Y) {
                     this.velocity.y = 0;
                     this.position.y = GROUND_Y - this.height;
@@ -406,20 +481,33 @@
                 }
 
                 // Attack Box Sync
-                this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
-                this.attackBox.position.y = this.position.y + this.attackBox.offset.y;
+                if (this.lastKey === 'a') {
+                    this.attackBox.offset.x = -this.attackBox.width;
+                } else {
+                    this.attackBox.offset.x = 0;
+                }
 
-                // Boundary check
+                this.attackBox.position.x = this.position.x + this.attackBox.offset.x; // Fixed offset logic
+                // Ensure attack box is centered on player when attacking
+                if (this.attackBox.offset.x < 0) {
+                    this.attackBox.position.x = this.position.x - (this.attackBox.width - this.width);
+                } else {
+                    this.attackBox.position.x = this.position.x;
+                }
+
+                this.attackBox.position.y = this.position.y;
+
+                // Boundary
                 if (this.position.x < 0) this.position.x = 0;
                 if (this.position.x + this.width > canvas.width) this.position.x = canvas.width - this.width;
             }
 
             attack() {
-                if (this.isAttacking) return; // Cooldown
+                if (this.isAttacking) return;
                 this.isAttacking = true;
                 setTimeout(() => {
                     this.isAttacking = false;
-                }, 100 * (10 / this.speed)); // Speed affects attack duration
+                }, 100 * (6 / this.speed)); // Speed affects recovery
             }
 
             takeHit(amt) {
@@ -435,64 +523,38 @@
             constructor({ position, velocity, color }) {
                 this.position = position;
                 this.velocity = velocity;
-                this.radius = Math.random() * 5 + 2; // Square size
+                this.radius = Math.random() * 5 + 3;
                 this.color = color;
                 this.alpha = 1;
             }
-
             draw() {
                 c.save();
                 c.globalAlpha = this.alpha;
                 c.fillStyle = this.color;
-                // Minecraft style: Square particles
                 c.fillRect(this.position.x, this.position.y, this.radius, this.radius);
                 c.restore();
             }
-
             update() {
                 this.draw();
-                this.velocity.x *= 0.98; // Friction
-                this.velocity.y += 0.2; // Gravity
+                this.velocity.x *= 0.95;
+                this.velocity.y += 0.3;
                 this.position.x += this.velocity.x;
                 this.position.y += this.velocity.y;
-                this.alpha -= 0.03;
+                this.alpha -= 0.05;
             }
         }
 
-        // --- 3. Global Variables ---
+        // --- 4. Global Variables ---
         let player, enemy;
         let particles = [];
-        let selectedWeapon = 'sword';
-        const TOTAL_POINTS = 15;
 
-        // --- 4. Logic Functions ---
-
-        function updatePoints() {
-            const str = parseInt(document.getElementById('strRange').value);
-            const agi = parseInt(document.getElementById('agiRange').value);
-            const vit = parseInt(document.getElementById('vitRange').value);
-
-            // Simple logic: Allow free adjustment, display values
-            document.getElementById('strVal').innerText = str;
-            document.getElementById('agiVal').innerText = agi;
-            document.getElementById('vitVal').innerText = vit;
-
-            // Note: In a stricter game, you'd clamp these to a total
-        }
-
-        function selectWeapon(type, btn) {
-            selectedWeapon = type;
-            document.querySelectorAll('.weapon-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-        }
-
-        function createParticles(x, y, color, amount = 8) {
+        function createParticles(x, y, color, amount = 10) {
             for (let i = 0; i < amount; i++) {
                 particles.push(new Particle({
                     position: { x: x, y: y },
                     velocity: {
-                        x: (Math.random() - 0.5) * 10,
-                        y: (Math.random() - 0.5) * 10
+                        x: (Math.random() - 0.5) * 15,
+                        y: (Math.random() - 0.5) * 15
                     },
                     color: color
                 }));
@@ -500,7 +562,8 @@
         }
 
         function screenShake() {
-            canvas.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
+            const intensity = 8;
+            canvas.style.transform = `translate(${Math.random() * intensity - intensity / 2}px, ${Math.random() * intensity - intensity / 2}px)`;
             setTimeout(() => {
                 canvas.style.transform = 'translate(0,0)';
             }, 50);
@@ -523,11 +586,12 @@
 
             if (player.health === enemy.health) {
                 document.getElementById('winnerText').innerText = 'DRAW';
+                document.getElementById('winnerText').style.color = 'white';
             } else if (player.health > enemy.health) {
-                document.getElementById('winnerText').innerText = 'YOU WIN';
+                document.getElementById('winnerText').innerText = 'YOU WIN!';
                 document.getElementById('winnerText').style.color = 'var(--neon-blue)';
             } else {
-                document.getElementById('winnerText').innerText = 'YOU LOSE';
+                document.getElementById('winnerText').innerText = 'YOU LOSE...';
                 document.getElementById('winnerText').style.color = 'var(--accent)';
             }
             gameRunning = false;
@@ -544,168 +608,169 @@
         }
 
         function startGame() {
-            // Get stats
+            GROUND_Y = canvas.height - 100;
+
             const pStr = parseInt(document.getElementById('strRange').value);
             const pAgi = parseInt(document.getElementById('agiRange').value);
             const pVit = parseInt(document.getElementById('vitRange').value);
 
-            // Hide UI, Show HUD
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
 
-            // --- Initialize Player ---
+            // Player Setup (Balanced Multipliers for Low Points)
+            // STR: 1pt = 5dmg ... 8pt = 40dmg (Avg 3pt = 15)
+            // AGI: 1pt = 2spd ... 8pt = 16spd (Avg 3pt = 6)
+            // VIT: 1pt = 25hp ... 8pt = 200hp (Avg 3.3pt = ~85)
+
             player = new Sprite({
                 position: { x: 100, y: 0 },
                 velocity: { x: 0, y: 0 },
                 offset: { x: 0, y: 0 },
                 color: '#2ed573'
             });
-            // Apply Stats
-            player.maxHealth = pVit * 20; // Base 100 at 5
+            player.maxHealth = pVit * 25;
             player.health = player.maxHealth;
-            player.speed = pAgi * 1.5;
-            player.damage = pStr * 3;
+            player.speed = 2 + (pAgi * 1.5); // Base speed + scaling
+            player.damage = pStr * 5;
             player.weaponType = selectedWeapon;
 
-            // Weapon specific tweaks
+            // Weapon Modifiers
             if (selectedWeapon === 'axe') {
-                player.damage *= 1.5;
-                player.speed *= 0.8;
+                player.damage *= 1.4;
+                player.speed *= 0.85;
                 player.attackBox.width = 80;
             }
             if (selectedWeapon === 'spear') {
-                player.damage *= 0.7;
-                player.speed *= 1.2;
-                player.attackBox.width = 160;
+                player.damage *= 0.8;
+                player.speed *= 1.1;
+                player.attackBox.width = 180;
             }
 
-            // --- Initialize Enemy (Random Stats) ---
+            // Enemy Setup (Random Build)
             enemy = new Sprite({
-                position: { x: canvas.width - 150, y: 0 },
+                position: { x: canvas.width - 200, y: 0 },
                 velocity: { x: 0, y: 0 },
                 offset: { x: -50, y: 0 },
                 color: '#ff4757'
             });
             enemy.weaponType = ['sword', 'axe', 'spear'][Math.floor(Math.random() * 3)];
-            enemy.maxHealth = 100 + (Math.random() * 50);
-            enemy.health = enemy.maxHealth;
-            enemy.damage = 15;
-            enemy.speed = 6;
 
-            // Reset Game State
+            // Random Stats for Enemy (Total ~10)
+            const eStr = Math.floor(Math.random() * 5) + 2;
+            const eVit = Math.floor(Math.random() * 5) + 2;
+            const eAgi = 10 - eStr - eVit; // Remainder
+
+            enemy.maxHealth = Math.max(2, eVit) * 25;
+            enemy.health = enemy.maxHealth;
+            enemy.damage = Math.max(2, eStr) * 5;
+            enemy.speed = 2 + (Math.max(1, eAgi) * 1.5);
+
+            // Weapon Modifiers Enemy
+            if (enemy.weaponType === 'axe') {
+                enemy.damage *= 1.4;
+                enemy.speed *= 0.85;
+                enemy.attackBox.width = 80;
+            }
+            if (enemy.weaponType === 'spear') {
+                enemy.damage *= 0.8;
+                enemy.speed *= 1.1;
+                enemy.attackBox.width = 180;
+            }
+
             particles = [];
             gameRunning = true;
             timer = 60;
             decreaseTimer();
-
             animate();
         }
 
         // --- 5. Game Loop ---
-
         function animate() {
             if (!gameRunning) return;
             animationId = window.requestAnimationFrame(animate);
 
-            // Draw Background (Grid style for "Forge" feel)
-            c.fillStyle = '#1e1e2e';
+            // Draw BG
+            c.fillStyle = '#0f172a';
             c.fillRect(0, 0, canvas.width, canvas.height);
             // Floor
-            c.fillStyle = '#111';
-            c.fillRect(0, GROUND_Y, canvas.width, 96);
+            c.fillStyle = '#1e293b';
+            c.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
 
-            // Update Players
             player.update();
             enemy.update();
 
-            // --- Player Movement ---
+            // Player Move
             player.velocity.x = 0;
-
-            // Simple attack direction logic
             if (keys.a.pressed && player.lastKey === 'a') {
                 player.velocity.x = -player.speed;
-                player.attackBox.offset.x = -player.attackBox.width; // Face left
             } else if (keys.d.pressed && player.lastKey === 'd') {
                 player.velocity.x = player.speed;
-                player.attackBox.offset.x = 0; // Face right
             }
 
-            // --- Simple AI Logic ---
+            // AI Logic
             const dist = player.position.x - enemy.position.x;
             enemy.velocity.x = 0;
 
-            if (!enemy.dead) {
-                // Face player
-                if (dist > 0) enemy.attackBox.offset.x = 0;
-                else enemy.attackBox.offset.x = -enemy.attackBox.width;
+            if (!enemy.dead && !player.dead) {
+                // Face player logic is handled in update() via lastKey simulation or offset
+                // Here we just set velocity
+                const attackRange = enemy.attackBox.width - 20;
 
-                // Move logic
-                if (Math.abs(dist) > enemy.attackBox.width - 20) {
-                    // Chase
-                    if (dist > 0) enemy.velocity.x = enemy.speed * 0.5;
-                    else enemy.velocity.x = -enemy.speed * 0.5;
-                } else {
-                    // Attack range
-                    if (Math.random() < 0.02) { // Random chance to attack
-                        enemy.attack();
+                if (Math.abs(dist) > attackRange) {
+                    if (dist > 0) {
+                        enemy.velocity.x = enemy.speed * 0.6;
+                        enemy.lastKey = 'd';
+                    } else {
+                        enemy.velocity.x = -enemy.speed * 0.6;
+                        enemy.lastKey = 'a';
                     }
+                } else {
+                    // In range
+                    if (Math.random() < 0.03) enemy.attack();
                 }
+
                 // Random jump
                 if (Math.random() < 0.005 && enemy.position.y + enemy.height >= GROUND_Y) {
-                    enemy.velocity.y = -15;
+                    enemy.velocity.y = -12;
                 }
             }
 
-            // --- Collision Detection (Attacks) ---
-
-            // Player Hit
+            // Hit Detection
+            // Player Attack
             if (rectangularCollision({ rectangle1: player, rectangle2: enemy }) &&
-                player.isAttacking && player.currentAttackFrame !== frameCount) { // Hacky debounce
+                player.isAttacking && player.currentAttackFrame !== frameCount) {
 
-                player.isAttacking = false; // Consume attack
+                player.isAttacking = false;
                 enemy.takeHit(player.damage);
-
-                // Visuals
-                createParticles(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, '#ff4757', 12);
+                createParticles(enemy.position.x + enemy.width / 2, enemy.position.y + enemy.height / 2, '#ff4757');
                 screenShake();
-
-                // Update Health Bar
                 document.getElementById('enemyHealth').style.width = (enemy.health / enemy.maxHealth) * 100 + '%';
-
                 if (enemy.health <= 0) determineWinner({ player, enemy, timerId });
             }
 
-            // Enemy Hit
+            // Enemy Attack
             if (rectangularCollision({ rectangle1: enemy, rectangle2: player }) &&
                 enemy.isAttacking) {
 
                 enemy.isAttacking = false;
                 player.takeHit(enemy.damage);
-
-                createParticles(player.position.x + player.width / 2, player.position.y + player.height / 2, '#2ed573', 12);
+                createParticles(player.position.x + player.width / 2, player.position.y + player.height / 2, '#2ed573');
                 screenShake();
-
                 document.getElementById('playerHealth').style.width = (player.health / player.maxHealth) * 100 + '%';
-
                 if (player.health <= 0) determineWinner({ player, enemy, timerId });
             }
 
-            // --- Particles ---
+            // Particles
             particles.forEach((particle, index) => {
-                if (particle.alpha <= 0) {
-                    particles.splice(index, 1);
-                } else {
-                    particle.update();
-                }
+                if (particle.alpha <= 0) particles.splice(index, 1);
+                else particle.update();
             });
         }
 
-        // Helper to avoid multi-hit on one frame
         let frameCount = 0;
         setInterval(() => frameCount++, 1000 / 60);
 
-        // --- 6. Event Listeners ---
-
+        // --- 6. Input ---
         window.addEventListener('keydown', (event) => {
             if (!gameRunning) return;
             switch (event.key.toLowerCase()) {
@@ -730,12 +795,8 @@
 
         window.addEventListener('keyup', (event) => {
             switch (event.key.toLowerCase()) {
-                case 'd':
-                    keys.d.pressed = false;
-                    break;
-                case 'a':
-                    keys.a.pressed = false;
-                    break;
+                case 'd': keys.d.pressed = false; break;
+                case 'a': keys.a.pressed = false; break;
             }
         });
 
